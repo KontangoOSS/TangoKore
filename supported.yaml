@@ -1,0 +1,31 @@
+# Supported platforms
+# To request a new platform, open a PR.
+
+linux:
+  - Ubuntu 24.04
+  - Ubuntu 22.04
+  - Debian 12
+  - Debian 13
+  - Proxmox VE 8
+  - Proxmox VE 9
+  - Alpine 3.20
+  - Rocky Linux 9
+  - Fedora 40
+  - Arch Linux
+  - Raspberry Pi OS
+
+darwin:
+  - macOS 15
+  - macOS 14
+  - macOS 13
+
+windows:
+  - Windows 11
+  - Windows 10
+  - Windows Server 2022
+  - Windows Server 2019
+
+containers:
+  - Docker
+  - Podman
+  - LXC
