@@ -122,8 +122,13 @@ var state struct {
 }
 
 // Run starts the agent and blocks until ctx is cancelled.
-// The only local state used is the machine ID from machine.json and the
-// persisted config.json (written by the config channel on every update).
+//
+// The agent tries Ziti (NATS telemetry + config channel) as the primary
+// transport. If Ziti isn't available yet — e.g. on a freshly enrolled machine
+// where the tunnel hasn't connected — it falls back to HTTP heartbeating
+// against the same controller endpoint. Both paths hit the same API; the
+// transport is transparent. The agent continuously retries Ziti in the
+// background and promotes to overlay when available.
 func Run(ctx context.Context, boot BootConfig, logger *slog.Logger) error {
 	if boot.IdentityPath == "" {
 		boot.IdentityPath = defaultIdentityPath()
@@ -136,36 +141,205 @@ func Run(ctx context.Context, boot BootConfig, logger *slog.Logger) error {
 
 	logger = logger.With("mid", machineID)
 
-	zitiCtx, err := ziti.NewContextFromFile(boot.IdentityPath)
-	if err != nil {
-		logger.Warn("ziti not available, using fallback", "error", err)
-		return runFallback(ctx, boot, machineID, logger)
-	}
-	defer zitiCtx.Close()
-
 	intervalCh := make(chan time.Duration, 1)
-
-	// eventCh is shared between telemetry collectors and the config channel.
-	// Apply results are reported as telemetry events through this channel.
 	eventCh := make(chan []byte, 256)
 
-	// Wait up to 15s for config.tango to deliver initial config before
-	// starting telemetry. If the overlay is slow the telemetry loop starts
-	// with the default interval and corrects itself when config arrives.
-	configReady := make(chan struct{})
-	go runConfigChannel(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, configReady, logger)
+	// Start collectors — they run for the lifetime of ctx regardless of transport.
+	go (&pulseCollector{intervalCh: intervalCh, initial: boot.defaultInterval()}).collect(ctx, machineID, eventCh)
+	go (&netCollector{interval: 5 * time.Minute}).collect(ctx, machineID, eventCh)
+	go (&logCollector{}).collect(ctx, machineID, eventCh)
 
-	select {
-	case <-configReady:
-	case <-time.After(15 * time.Second):
-	case <-ctx.Done():
-		return nil
+	// Start the local pulse API so applications can emit their own tagged KV events.
+	if ln, err := startPulseAPI(machineID, eventCh, "127.0.0.1:8801"); err != nil {
+		logger.Warn("pulse API failed to start", "error", err)
+	} else {
+		defer ln.Close()
+		logger.Info("pulse API listening", "addr", "127.0.0.1:8801")
 	}
 
-	return runTelemetryWithCh(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, logger)
+	// Edge buffer holds events when neither NATS nor HTTP is available.
+	edgeBuf := newEventBuffer(5 * time.Minute)
+
+	// Try to connect via Ziti. If it works, run the overlay path.
+	// If not, start HTTP fallback and keep retrying Ziti in the background.
+	for {
+		if ctx.Err() != nil {
+			return nil
+		}
+
+		zitiCtx, err := ziti.NewContextFromFile(boot.IdentityPath)
+		if err != nil {
+			logger.Info("ziti identity not available, using HTTP fallback", "error", err)
+			if boot.FallbackURL == "" {
+				logger.Error("no fallback URL configured, waiting for overlay")
+				select {
+				case <-ctx.Done():
+					return nil
+				case <-time.After(30 * time.Second):
+					continue
+				}
+			}
+			runFallbackUntilOverlay(ctx, boot, machineID, eventCh, edgeBuf, intervalCh, logger)
+			continue
+		}
+
+		// Verify the overlay actually works by trying to dial NATS.
+		// NewContextFromFile only loads the identity — it doesn't connect.
+		logger.Info("ziti identity loaded, verifying overlay connectivity...")
+		testConn, testErr := zitiCtx.Dial(boot.telemetrySvc())
+		if testErr != nil {
+			zitiCtx.Close()
+			logger.Warn("ziti overlay not reachable, using HTTP fallback", "error", testErr)
+			if boot.FallbackURL == "" {
+				select {
+				case <-ctx.Done():
+					return nil
+				case <-time.After(30 * time.Second):
+					continue
+				}
+			}
+			runFallbackUntilOverlay(ctx, boot, machineID, eventCh, edgeBuf, intervalCh, logger)
+			continue
+		}
+		testConn.Close()
+		logger.Info("ziti overlay verified, switching to NATS telemetry")
+
+		// Run NATS telemetry + config subscription — both on the same NATS connection.
+		// Telemetry publishes to tango.telemetry.<machineID>
+		// Config subscribes to tango.config.<machineID>
+		runTelemetryLoop(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, logger)
+		zitiCtx.Close()
+
+		if ctx.Err() != nil {
+			return nil
+		}
+
+		logger.Warn("overlay disconnected, falling back to HTTP")
+		// Loop back — try Ziti again, fall back to HTTP if needed.
+	}
 }
 
-// -- Config channel ----------------------------------------------------------
+// runFallbackUntilOverlay sends heartbeats via HTTP while periodically
+// trying to establish a Ziti connection. Returns when Ziti becomes available
+// or ctx is cancelled.
+func runFallbackUntilOverlay(ctx context.Context, boot BootConfig, machineID string, eventCh chan []byte, edgeBuf *eventBuffer, intervalCh chan time.Duration, logger *slog.Logger) {
+	interval := boot.defaultInterval()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	// Try Ziti every 30 seconds alongside HTTP heartbeating.
+	zitiRetry := time.NewTicker(30 * time.Second)
+	defer zitiRetry.Stop()
+
+	beat := func() {
+		hb := buildHeartbeat(machineID)
+		ev, _ := encodeEvent(machineID, "hb", hb)
+		if cmd, _ := httpHeartbeat(ctx, boot.FallbackURL, machineID, ev); cmd != nil {
+			handleCmd(cmd, intervalCh)
+		}
+		// Also drain any buffered events via HTTP.
+		for _, payload := range edgeBuf.drain() {
+			httpHeartbeat(ctx, boot.FallbackURL, machineID, payload)
+		}
+		// Drain collector events.
+		for {
+			select {
+			case payload := <-eventCh:
+				httpHeartbeat(ctx, boot.FallbackURL, machineID, payload)
+			default:
+				return
+			}
+		}
+	}
+
+	beat()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case d := <-intervalCh:
+			interval = d
+			ticker.Reset(d)
+		case <-ticker.C:
+			beat()
+		case <-zitiRetry.C:
+			// Try Ziti — if it works, return so the main loop promotes to overlay.
+			if zitiCtx, err := ziti.NewContextFromFile(boot.IdentityPath); err == nil {
+				zitiCtx.Close()
+				logger.Info("ziti became available, promoting to overlay")
+				return
+			}
+		}
+	}
+}
+
+// -- Instruction handling ----------------------------------------------------
+
+// handleInstruction processes a single instruction from the controller,
+// whether it arrives via NATS subscription or the legacy TCP config channel.
+func handleInstruction(instr Instruction, boot BootConfig, machineID string, zitiCtx ziti.Context, eventCh chan<- []byte, intervalCh chan<- time.Duration, logger *slog.Logger) {
+	switch instr.Type {
+	case "hello":
+		var cfg helloPayload
+		if err := json.Unmarshal(instr.Payload, &cfg); err == nil {
+			state.mu.Lock()
+			state.hello = cfg
+			state.hasHello = true
+			state.mu.Unlock()
+			if cfg.Interval > 0 {
+				select {
+				case intervalCh <- time.Duration(cfg.Interval) * time.Second:
+				default:
+				}
+			}
+		}
+
+	case "config":
+		var cfg helloPayload
+		if err := json.Unmarshal(instr.Payload, &cfg); err == nil {
+			state.mu.Lock()
+			state.hello = cfg
+			state.hasHello = true
+			state.mu.Unlock()
+			if cfg.Interval > 0 {
+				select {
+				case intervalCh <- time.Duration(cfg.Interval) * time.Second:
+				default:
+				}
+			}
+			logger.Info("config updated", "nickname", cfg.Nickname, "interval", cfg.Interval)
+		}
+
+	case "apply":
+		go func() {
+			ctx := context.Background()
+			result := handleApply(ctx, zitiCtx, instr.Payload, logger)
+			if ev, err := encodeEvent(machineID, "apply", result); err == nil {
+				select {
+				case eventCh <- ev:
+				default:
+				}
+			}
+		}()
+
+	case "set_interval":
+		var p struct {
+			Seconds int `json:"seconds"`
+		}
+		if err := json.Unmarshal(instr.Payload, &p); err == nil && p.Seconds > 0 {
+			select {
+			case intervalCh <- time.Duration(p.Seconds) * time.Second:
+			default:
+			}
+		}
+
+	case "reload":
+		logger.Info("reload requested")
+	}
+}
+
+// -- Config channel (legacy TCP, kept for backwards compat) ------------------
 
 // runConfigChannel dials config.tango, sends the machine ID, and reads
 // instructions pushed down by the controller. Reconnects on disconnect.
@@ -303,29 +477,7 @@ func readInstructions(ctx context.Context, conn io.ReadWriteCloser, boot BootCon
 // A local eventBuffer holds up to 5 minutes of events when NATS is unreachable.
 // On reconnect the buffer is drained into NATS before resuming live publishing.
 // JetStream publish is used when available for delivery acknowledgement.
-// runTelemetryWithCh is like runTelemetry but uses an externally-provided
-// eventCh shared with the config channel (for apply result reporting).
-func runTelemetryWithCh(ctx context.Context, zitiCtx ziti.Context, boot BootConfig, machineID string, eventCh chan []byte, intervalCh chan time.Duration, logger *slog.Logger) error {
-	// Start collectors — they feed into the shared eventCh.
-	go (&heartbeatCollector{intervalCh: intervalCh, initial: boot.defaultInterval()}).collect(ctx, machineID, eventCh)
-	go (&netCollector{interval: 5 * time.Minute}).collect(ctx, machineID, eventCh)
-	go (&logCollector{}).collect(ctx, machineID, eventCh)
-
-	return runTelemetryLoop(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, logger)
-}
-
-func runTelemetry(ctx context.Context, zitiCtx ziti.Context, boot BootConfig, machineID string, intervalCh chan time.Duration, logger *slog.Logger) error {
-	eventCh := make(chan []byte, 256)
-
-	go (&heartbeatCollector{intervalCh: intervalCh, initial: boot.defaultInterval()}).collect(ctx, machineID, eventCh)
-	go (&netCollector{interval: 5 * time.Minute}).collect(ctx, machineID, eventCh)
-	go (&logCollector{}).collect(ctx, machineID, eventCh)
-
-	return runTelemetryLoop(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, logger)
-}
-
-func runTelemetryLoop(ctx context.Context, zitiCtx ziti.Context, boot BootConfig, machineID string, eventCh chan []byte, intervalCh chan time.Duration, logger *slog.Logger) error {
-	subject := "tango.telemetry." + machineID
+func runTelemetryLoop(ctx context.Context, zitiCtx ziti.Context, boot BootConfig, machineID string, eventCh chan []byte, intervalCh chan time.Duration, logger *slog.Logger) {
 	backoff := 5 * time.Second
 
 	// Local buffer — holds events for up to 5 minutes when NATS is down.
@@ -334,7 +486,7 @@ func runTelemetryLoop(ctx context.Context, zitiCtx ziti.Context, boot BootConfig
 	interval := boot.defaultInterval()
 	for {
 		if ctx.Err() != nil {
-			return nil
+			return
 		}
 
 		nc, err := connectNATS(zitiCtx, boot.telemetrySvc())
@@ -364,7 +516,7 @@ func runTelemetryLoop(ctx context.Context, zitiCtx ziti.Context, boot BootConfig
 					select {
 					case <-ctx.Done():
 						fallbackTicker.Stop()
-						return nil
+						return
 					case d := <-intervalCh:
 						interval = d
 						fallbackTicker.Reset(d)
@@ -379,7 +531,7 @@ func runTelemetryLoop(ctx context.Context, zitiCtx ziti.Context, boot BootConfig
 				bufferFromChannel(eventCh, edgeBuf)
 				select {
 				case <-ctx.Done():
-					return nil
+					return
 				case <-time.After(backoff):
 					if backoff < 5*time.Minute {
 						backoff *= 2
@@ -391,39 +543,64 @@ func runTelemetryLoop(ctx context.Context, zitiCtx ziti.Context, boot BootConfig
 
 		backoff = 5 * time.Second
 
+		// Subscribe to config instructions on the same NATS connection.
+		configSubject := "tango.config." + machineID
+		configSub, subErr := nc.Subscribe(configSubject, func(msg *natsgo.Msg) {
+			var instr Instruction
+			if err := json.Unmarshal(msg.Data, &instr); err != nil {
+				return
+			}
+			logger.Info("config received via NATS", "type", instr.Type)
+			handleInstruction(instr, boot, machineID, zitiCtx, eventCh, intervalCh, logger)
+		})
+		if subErr != nil {
+			logger.Warn("config subscription failed", "error", subErr)
+		} else {
+			logger.Info("subscribed to config", "subject", configSubject)
+		}
+
 		// Drain any buffered events from the edge buffer first.
 		js, jsErr := nc.JetStream()
 		if jsErr != nil {
 			logger.Warn("jetstream unavailable, using core publish", "error", jsErr)
 		}
-		drainEdgeBuffer(edgeBuf, nc, js, subject, logger)
+		drainEdgeBuffer(edgeBuf, nc, js, machineID, logger)
 
-		interval = publishEvents(ctx, nc, js, subject, eventCh, edgeBuf, intervalCh, interval, logger)
+		interval = publishEvents(ctx, nc, js, machineID, eventCh, edgeBuf, intervalCh, interval, logger)
+
+		if configSub != nil {
+			configSub.Unsubscribe()
+		}
 		nc.Close()
 
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		case <-time.After(5 * time.Second):
 		}
 	}
 }
 
 // drainEdgeBuffer replays buffered events into NATS after a reconnect.
-func drainEdgeBuffer(buf *eventBuffer, nc *natsgo.Conn, js natsgo.JetStreamContext, subject string, logger *slog.Logger) {
+func drainEdgeBuffer(buf *eventBuffer, nc *natsgo.Conn, js natsgo.JetStreamContext, machineID string, logger *slog.Logger) {
 	events := buf.drain()
 	if len(events) == 0 {
 		return
 	}
 	logger.Info("draining edge buffer", "count", len(events))
 	for _, payload := range events {
+		slug, data, err := decodePulseMessage(payload)
+		if err != nil {
+			slug = "unknown"
+			data = payload
+		}
+		subject := "tango.telemetry." + machineID + "." + slug
 		if js != nil {
-			if _, err := js.Publish(subject, payload); err != nil {
-				// JetStream publish failed — fall back to core publish.
-				nc.Publish(subject, payload)
+			if _, err := js.Publish(subject, data); err != nil {
+				nc.Publish(subject, data)
 			}
 		} else {
-			nc.Publish(subject, payload)
+			nc.Publish(subject, data)
 		}
 	}
 }
@@ -461,11 +638,11 @@ func (d *zitiDialer) Dial(_, _ string) (net.Conn, error) {
 	return d.ctx.Dial(d.service)
 }
 
-// publishEvents drains eventCh and publishes each message to NATS until the
-// connection drops or ctx is cancelled. Uses JetStream publish when available
-// for delivery acknowledgement; falls back to core publish otherwise.
-// Events that fail to publish are pushed into the edge buffer for retry.
-func publishEvents(ctx context.Context, nc *natsgo.Conn, js natsgo.JetStreamContext, subject string, eventCh <-chan []byte, edgeBuf *eventBuffer, intervalCh <-chan time.Duration, interval time.Duration, logger *slog.Logger) time.Duration {
+// publishEvents drains eventCh and publishes each pulse to NATS.
+// Each pulse message is framed as [slug length][slug][msgpack data].
+// The NATS subject is built from the machine ID and slug:
+//   tango.telemetry.<machineID>.<slug>
+func publishEvents(ctx context.Context, nc *natsgo.Conn, js natsgo.JetStreamContext, machineID string, eventCh <-chan []byte, edgeBuf *eventBuffer, intervalCh <-chan time.Duration, interval time.Duration, logger *slog.Logger) time.Duration {
 	for {
 		select {
 		case <-ctx.Done():
@@ -480,54 +657,32 @@ func publishEvents(ctx context.Context, nc *natsgo.Conn, js natsgo.JetStreamCont
 				edgeBuf.push(payload)
 				return interval
 			}
+
+			// Extract slug from the framed pulse message to build the subject.
+			slug, data, err := decodePulseMessage(payload)
+			if err != nil {
+				// Legacy format — publish to base subject
+				slug = "unknown"
+				data = payload
+			}
+			subject := "tango.telemetry." + machineID + "." + slug
+
 			if js != nil {
-				if _, err := js.Publish(subject, payload); err != nil {
-					// JetStream ack failed — buffer locally.
+				if _, err := js.Publish(subject, data); err != nil {
 					edgeBuf.push(payload)
 					if !nc.IsConnected() {
 						return interval
 					}
 				}
 			} else {
-				nc.Publish(subject, payload)
+				nc.Publish(subject, data)
 			}
 		}
 	}
 }
 
 // -- Fallback ----------------------------------------------------------------
-
-func runFallback(ctx context.Context, boot BootConfig, machineID string, logger *slog.Logger) error {
-	if boot.FallbackURL == "" {
-		return fmt.Errorf("ziti unavailable and no fallback URL configured")
-	}
-	intervalCh := make(chan time.Duration, 1)
-	interval := boot.defaultInterval()
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	beat := func() {
-		hb := buildHeartbeat(machineID)
-		ev, _ := encodeEvent(machineID, "hb", hb)
-		if cmd, _ := httpHeartbeat(ctx, boot.FallbackURL, machineID, ev); cmd != nil {
-			handleCmd(cmd, intervalCh)
-		}
-	}
-
-	beat()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case d := <-intervalCh:
-			interval = d
-			ticker.Reset(d)
-		case <-ticker.C:
-			beat()
-		}
-	}
-}
+// HTTP fallback is now handled by runFallbackUntilOverlay in the main Run loop.
 
 // handleCmd acts on a command returned in a heartbeat response.
 func handleCmd(cmd *HeartbeatCmd, intervalCh chan<- time.Duration) {
