@@ -1,0 +1,9 @@
+bao_path: qa
+name: QA
+priority: 2
+promote_from: dev
+promote_to: prod
+slug: qa
+vmid_range_end: 299
+vmid_range_start: 200
+ziti_prefix: qa

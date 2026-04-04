@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 8008
+description: Decentralized communication server
+docker_image: "matrixdotorg/synapse:latest"
+language: python
+license: agpl3
+maintainer: matrix
+name: Matrix-Synapse
+official_site: "https://matrix.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/matrix-synapse
+virtualization_type: vm

@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 8080
+description: Simple static homepage for services
+docker_image: "b4bz/homer:latest"
+language: javascript
+license: apache2
+maintainer: kontango
+name: Homer
+official_site: "https://github.com/bastienwirtz/homer"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-xs-1
+source: external/homer
+virtualization_type: lxc

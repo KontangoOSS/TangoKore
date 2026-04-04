@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 8083
+description: Web app for browsing and reading ebooks
+docker_image: "lscr.io/linuxserver/calibre-web:latest"
+language: python
+license: gpl3
+maintainer: linuxserver
+name: Calibre-Web
+official_site: "https://github.com/janeczku/calibre-web"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/calibre-web
+virtualization_type: lxc

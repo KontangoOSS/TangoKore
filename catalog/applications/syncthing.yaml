@@ -1,0 +1,16 @@
+active: false
+category: storage
+default_build: latest
+default_ports: 8384
+description: Continuous file synchronization program
+docker_image: "syncthing/syncthing:latest"
+language: go
+license: mpl2
+maintainer: syncthing
+name: Syncthing
+official_site: "https://syncthing.net/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/syncthing
+virtualization_type: lxc

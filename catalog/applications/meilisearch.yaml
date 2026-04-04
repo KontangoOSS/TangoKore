@@ -1,0 +1,16 @@
+active: false
+category: databases
+default_build: latest
+default_ports: 7700
+description: Lightning-fast search engine
+docker_image: "getmeili/meilisearch:latest"
+language: rust
+license: mit
+maintainer: meili
+name: Meilisearch
+official_site: "https://www.meilisearch.com/"
+sizing_max: tg-md-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-2
+source: external/meilisearch
+virtualization_type: lxc

@@ -1,0 +1,16 @@
+active: true
+category: monitoring
+default_build: latest
+default_ports: 9090
+description: Metrics collection and alerting system
+docker_image: "prom/prometheus:latest"
+language: go
+license: apache2
+maintainer: grafana
+name: Prometheus
+official_site: "https://prometheus.io/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/prometheus
+virtualization_type: lxc

@@ -1,0 +1,8 @@
+aws_type: m5.8xlarge
+disk_gb: 1000
+do_slug: g-32vcpu-128gb
+memory_mb: 131072
+name: Double Extra Large
+proxmox_template: vm-xxl
+use_case: LLM inference, large-scale analytics, Ollama
+vcpus: 32

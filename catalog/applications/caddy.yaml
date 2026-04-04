@@ -1,0 +1,17 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 80,443,22
+description: Reverse proxy and TLS automation
+docker_image: "caddy:latest"
+language: go
+license: apache2
+maintainer: caddyserver
+name: Caddy
+official_site: "https://caddyserver.com/"
+repo_url: "https://github.com/KontangoOSS/caddy"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/caddy
+virtualization_type: lxc

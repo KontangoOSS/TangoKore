@@ -1,0 +1,16 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 5432,22
+description: Relational database
+docker_image: "postgres:16-alpine"
+language: postgres
+license: mit
+maintainer: kontango
+name: PostgreSQL
+official_site: "https://www.postgresql.org/"
+sizing_max: tg-lg-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-md-1
+source: external/postgres
+virtualization_type: lxc

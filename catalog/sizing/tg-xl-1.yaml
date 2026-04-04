@@ -1,0 +1,8 @@
+aws_type: t3.2xlarge
+disk_gb: 256
+do_slug: so-16vcpu-32gb
+memory_mb: 32768
+name: Extra Large
+proxmox_template: vm-xl
+use_case: GPU workloads, large clusters, heavy computation
+vcpus: 16

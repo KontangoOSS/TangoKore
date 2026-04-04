@@ -1,0 +1,16 @@
+active: false
+category: automation
+default_build: latest
+default_ports: 3000
+description: Self-hosted automation agent system
+docker_image: "huginn/huginn:latest"
+language: ruby
+license: mit
+maintainer: kontango
+name: Huginn
+official_site: "https://github.com/huginn/huginn"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/huginn
+virtualization_type: lxc

@@ -1,0 +1,6 @@
+description: Running the day-to-day — projects, tasks, workflows
+name: Operations
+vmid_dev_end: 46999
+vmid_dev_start: 42000
+vmid_prod_end: 4699
+vmid_prod_start: 4200

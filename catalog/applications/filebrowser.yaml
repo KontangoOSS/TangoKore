@@ -1,0 +1,16 @@
+active: false
+category: storage
+default_build: latest
+default_ports: 80
+description: Web file browser and manager
+docker_image: "filebrowser/filebrowser:latest"
+language: go
+license: apache2
+maintainer: kontango
+name: FileBrowser
+official_site: "https://filebrowser.org/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/filebrowser
+virtualization_type: lxc

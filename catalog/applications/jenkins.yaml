@@ -1,0 +1,16 @@
+active: true
+category: building
+default_build: latest
+default_ports: 8080
+description: Automation server for CI/CD pipelines
+docker_image: "jenkins/jenkins:lts"
+language: java
+license: mit
+maintainer: jenkins
+name: Jenkins
+official_site: "https://www.jenkins.io/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/jenkins
+virtualization_type: lxc

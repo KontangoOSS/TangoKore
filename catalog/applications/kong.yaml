@@ -1,0 +1,16 @@
+active: false
+category: networking
+default_build: latest
+default_ports: 8000
+description: Cloud-native API gateway
+docker_image: "kong:latest"
+language: lua
+license: apache2
+maintainer: kong
+name: Kong
+official_site: "https://konghq.com/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/kong
+virtualization_type: lxc

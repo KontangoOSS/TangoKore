@@ -1,0 +1,16 @@
+active: false
+category: databases
+default_build: latest
+default_ports: 8983
+description: Enterprise search platform
+docker_image: "solr:latest"
+language: java
+license: apache2
+maintainer: apache-foundation
+name: Solr
+official_site: "https://solr.apache.org/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/solr
+virtualization_type: lxc

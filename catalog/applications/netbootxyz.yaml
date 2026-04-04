@@ -1,0 +1,16 @@
+active: true
+category: provisioning
+default_build: latest
+default_ports: 69,3000,8080
+description: Zero-trust PXE boot provisioning
+docker_image: "ghcr.io/netbootxyz/netbootxyz:latest"
+language: shell
+license: apache2
+maintainer: kontango
+name: netboot.xyz
+official_site: "https://netboot.xyz/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: kreate/netbootxyz
+virtualization_type: lxc

@@ -1,0 +1,5 @@
+distro: nixos
+family: linux
+maintainer: NixOS Foundation
+name: NixOS
+type: server

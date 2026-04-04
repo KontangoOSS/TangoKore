@@ -1,0 +1,16 @@
+active: false
+category: networking
+default_build: latest
+default_ports: 80
+description: Reliable, high-performance TCP/HTTP load balancer
+docker_image: "haproxy:alpine"
+language: c
+license: gpl2
+maintainer: haproxy
+name: HAProxy
+official_site: "https://www.haproxy.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/haproxy
+virtualization_type: lxc

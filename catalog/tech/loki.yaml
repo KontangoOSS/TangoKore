@@ -1,0 +1,4 @@
+name: Loki
+protocol: http
+runtime: server
+type: tool

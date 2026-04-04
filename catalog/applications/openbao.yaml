@@ -1,0 +1,16 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 8200,8201,22
+description: Secrets management and identity
+docker_image: "quay.io/openbao/openbao:latest"
+language: go
+license: mpl2
+maintainer: openbao
+name: OpenBao
+official_site: "https://openbao.org/"
+sizing_max: tg-md-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/openbao
+virtualization_type: lxc

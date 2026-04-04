@@ -1,0 +1,15 @@
+active: true
+category: security
+default_build: latest
+default_ports: 80,443
+description: Honeypot 404 page with client fingerprinting
+language: javascript
+license: mit
+maintainer: kontango
+name: 404rd
+official_site: "https://github.com/KontangoOSS/404rd"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-xs-1
+source: kreate/404rd
+virtualization_type: lxc

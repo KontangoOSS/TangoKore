@@ -1,0 +1,17 @@
+active: false
+category: security
+default_build: latest
+default_ports: 80
+description: Open source password management solution
+docker_image: "bitwarden/self-host:latest"
+language: csharp
+license: agpl3
+maintainer: bitwarden
+name: Bitwarden
+official_site: "https://bitwarden.com/"
+repo_url: "https://github.com/KontangoOSS/bitwarden"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/bitwarden
+virtualization_type: lxc

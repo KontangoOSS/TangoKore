@@ -1,0 +1,16 @@
+active: false
+category: learning
+default_build: latest
+default_ports: 2368
+description: Modern publishing platform for blogs and content
+docker_image: "ghost:alpine"
+language: javascript
+license: mit
+maintainer: ghost
+name: Ghost
+official_site: "https://ghost.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/ghost
+virtualization_type: lxc

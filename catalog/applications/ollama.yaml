@@ -1,0 +1,16 @@
+active: true
+category: ai
+default_build: latest
+default_ports: 11434
+description: Local LLM inference server — run models locally
+docker_image: "ollama/ollama:latest"
+language: go
+license: mit
+maintainer: ollama
+name: Ollama
+official_site: "https://ollama.com/"
+sizing_max: tg-xxl-1
+sizing_min: tg-lg-1
+sizing_suggested: tg-xl-1
+source: external/ollama
+virtualization_type: vm

@@ -1,0 +1,3 @@
+name: SSH
+runtime: standard
+type: protocol

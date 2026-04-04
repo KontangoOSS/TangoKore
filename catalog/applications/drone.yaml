@@ -1,0 +1,16 @@
+active: false
+category: building
+default_build: latest
+default_ports: 80
+description: Container-native CI/CD platform
+docker_image: "drone/drone:latest"
+language: go
+license: apache2
+maintainer: kontango
+name: Drone
+official_site: "https://www.drone.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/drone
+virtualization_type: lxc

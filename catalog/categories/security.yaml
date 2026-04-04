@@ -1,0 +1,6 @@
+description: Passwords, locks, cameras, access control
+name: Security
+vmid_dev_end: 29999
+vmid_dev_start: 25000
+vmid_prod_end: 2999
+vmid_prod_start: 2500

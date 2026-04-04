@@ -1,0 +1,16 @@
+active: true
+category: databases
+default_build: latest
+default_ports: 9200
+description: Distributed search and analytics engine
+docker_image: "elasticsearch:8.11.0"
+language: java
+license: proprietary
+maintainer: elastic
+name: Elasticsearch
+official_site: "https://www.elastic.co/elasticsearch/"
+sizing_max: tg-xxl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-md-2
+source: external/elasticsearch
+virtualization_type: lxc

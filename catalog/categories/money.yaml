@@ -1,0 +1,6 @@
+description: Payments, invoices, accounting, subscriptions
+name: Money
+vmid_dev_end: 71999
+vmid_dev_start: 70000
+vmid_prod_end: 7199
+vmid_prod_start: 7000

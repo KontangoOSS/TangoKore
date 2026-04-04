@@ -1,0 +1,4 @@
+name: SQLite
+protocol: file
+runtime: embedded
+type: database

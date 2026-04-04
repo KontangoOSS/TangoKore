@@ -1,0 +1,5 @@
+distro: debian
+family: linux
+maintainer: Debian Project
+name: Debian
+type: server

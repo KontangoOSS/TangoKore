@@ -1,0 +1,16 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 80,443,8080
+description: Cloud-native ingress controller
+docker_image: "traefik:latest"
+language: go
+license: mit
+maintainer: traefik
+name: Traefik
+official_site: "https://traefik.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/traefik
+virtualization_type: lxc

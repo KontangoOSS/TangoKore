@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 8000
+description: Lightweight privacy-friendly web analytics
+docker_image: "plausible/analytics:latest"
+language: elixir
+license: agpl3
+maintainer: plausible
+name: Plausible
+official_site: "https://plausible.io/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/plausible
+virtualization_type: lxc

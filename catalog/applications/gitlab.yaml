@@ -1,0 +1,17 @@
+active: true
+category: building
+default_build: latest
+default_ports: 80
+description: Complete DevOps platform with Git repository management
+docker_image: "gitlab/gitlab-ce:latest"
+language: ruby
+license: mit
+maintainer: gitlab
+name: GitLab
+official_site: "https://about.gitlab.com/"
+repo_url: "https://github.com/KontangoOSS/gitlab"
+sizing_max: tg-xxl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-lg-1
+source: external/gitlab
+virtualization_type: vm

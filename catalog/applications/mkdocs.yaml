@@ -1,0 +1,17 @@
+active: true
+category: learning
+default_build: latest
+default_ports: 8000,22
+description: Documentation site
+docker_image: "squidfunk/mkdocs-material:latest"
+framework: mkdocs-material
+language: python
+license: mit
+maintainer: kontango
+name: MkDocs
+official_site: "https://squidfunk.github.io/mkdocs-material/"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-xs-1
+source: kore/mkdocs
+virtualization_type: lxc

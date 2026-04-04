@@ -1,0 +1,16 @@
+active: false
+category: automation
+default_build: latest
+default_ports: 8052
+description: Web-based UI for Ansible automation
+docker_image: "ansible/awx:latest"
+language: python
+license: apache2
+maintainer: kontango
+name: Ansible-AWX
+official_site: "https://github.com/ansible/awx"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/ansible-awx
+virtualization_type: vm

@@ -1,0 +1,17 @@
+active: true
+category: building
+default_build: latest
+default_ports: 3000,22
+description: Git forge and code hosting
+docker_image: "codeberg.org/forgejo/forgejo:latest"
+language: go
+license: mit
+maintainer: forgejo
+name: Forgejo
+official_site: "https://forgejo.org/"
+repo_url: "https://github.com/KontangoOSS/forgejo"
+sizing_max: tg-md-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-2
+source: external/forgejo
+virtualization_type: lxc

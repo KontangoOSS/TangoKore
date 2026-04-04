@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 80
+description: Highly customizable dashboard for services
+docker_image: "lissy93/dashy:latest"
+language: javascript
+license: mit
+maintainer: kontango
+name: Dashy
+official_site: "https://dashy.to/"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/dashy
+virtualization_type: lxc

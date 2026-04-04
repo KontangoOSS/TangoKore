@@ -1,0 +1,16 @@
+active: false
+category: databases
+default_build: latest
+default_ports: 9042
+description: Distributed NoSQL database
+docker_image: "cassandra:latest"
+language: java
+license: apache2
+maintainer: apache-foundation
+name: Cassandra
+official_site: "https://cassandra.apache.org/"
+sizing_max: tg-xl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-lg-1
+source: external/cassandra
+virtualization_type: lxc

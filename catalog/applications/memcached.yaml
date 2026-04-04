@@ -1,0 +1,16 @@
+active: false
+category: databases
+default_build: latest
+default_ports: 11211
+description: High-performance distributed memory caching
+docker_image: "memcached:alpine"
+language: c
+license: bsd3
+maintainer: kontango
+name: Memcached
+official_site: "https://memcached.org/"
+sizing_max: tg-lg-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-md-2
+source: external/memcached
+virtualization_type: lxc

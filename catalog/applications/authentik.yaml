@@ -1,0 +1,16 @@
+active: true
+category: security
+default_build: latest
+default_ports: 9000,9443
+description: Identity provider — SSO, OIDC, SAML, SCIM
+docker_image: "ghcr.io/goauthentik/server:latest"
+language: python
+license: mit
+maintainer: authentik
+name: Authentik
+official_site: "https://goauthentik.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/authentik
+virtualization_type: lxc

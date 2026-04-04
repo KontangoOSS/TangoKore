@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 8096
+description: Free media system for managing and streaming media
+docker_image: "jellyfin/jellyfin:latest"
+language: csharp
+license: gpl2
+maintainer: jellyfin
+name: Jellyfin
+official_site: "https://jellyfin.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/jellyfin
+virtualization_type: vm

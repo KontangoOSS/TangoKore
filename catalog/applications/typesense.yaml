@@ -1,0 +1,16 @@
+active: false
+category: databases
+default_build: latest
+default_ports: 8108
+description: Fast, typo-tolerant search engine
+docker_image: "typesense/typesense:latest"
+language: cpp
+license: gpl3
+maintainer: meili
+name: Typesense
+official_site: "https://typesense.org/"
+sizing_max: tg-md-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-2
+source: external/typesense
+virtualization_type: lxc

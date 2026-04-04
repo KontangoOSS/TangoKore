@@ -1,0 +1,17 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 3000
+description: Open source project management tool
+docker_image: "makeplane/plane-frontend:latest"
+language: python
+license: agpl3
+maintainer: plane
+name: Plane
+official_site: "https://plane.so/"
+repo_url: "https://github.com/KontangoOSS/plane"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/plane
+virtualization_type: lxc

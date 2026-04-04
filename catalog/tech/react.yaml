@@ -1,0 +1,4 @@
+name: React
+protocol: https
+runtime: browser
+type: framework

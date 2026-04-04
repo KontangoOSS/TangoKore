@@ -1,0 +1,6 @@
+description: Code, CI/CD, testing, deploying software
+name: Building
+vmid_dev_end: 41999
+vmid_dev_start: 38000
+vmid_prod_end: 4199
+vmid_prod_start: 3800

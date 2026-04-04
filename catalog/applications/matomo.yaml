@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 80
+description: Open source web analytics platform
+docker_image: "matomo:apache"
+language: php
+license: gpl3
+maintainer: apache-foundation
+name: Matomo
+official_site: "https://matomo.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/matomo
+virtualization_type: lxc

@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 8080
+description: Recipe manager with meal planning
+docker_image: "vabene1111/recipes:latest"
+language: python
+license: agpl3
+maintainer: kontango
+name: Tandoor
+official_site: "https://tandoor.dev/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/tandoor
+virtualization_type: lxc

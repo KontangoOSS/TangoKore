@@ -1,0 +1,4 @@
+name: MinIO
+protocol: s3
+runtime: server
+type: storage

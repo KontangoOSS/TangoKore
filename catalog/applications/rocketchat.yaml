@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 3000
+description: Open source team chat platform
+docker_image: "rocket.chat:latest"
+language: javascript
+license: mit
+maintainer: rocketchat
+name: RocketChat
+official_site: "https://rocket.chat/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/rocketchat
+virtualization_type: lxc

@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 7878
+description: Movie collection manager for Usenet and BitTorrent
+docker_image: "lscr.io/linuxserver/radarr:latest"
+language: csharp
+license: gpl3
+maintainer: linuxserver
+name: Radarr
+official_site: "https://radarr.video/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/radarr
+virtualization_type: lxc

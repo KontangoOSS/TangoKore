@@ -1,0 +1,26 @@
+# Binaries
+kontango
+kontango-controller
+*.exe
+
+# Build output
+build/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test artifacts
+*.test
+coverage.out
+
+# Environment
+.env
+*.env.local

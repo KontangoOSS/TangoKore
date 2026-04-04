@@ -1,0 +1,16 @@
+active: false
+category: building
+default_build: latest
+default_ports: 8080
+description: Declarative GitOps continuous delivery for Kubernetes
+docker_image: "quay.io/argoproj/argocd:latest"
+language: go
+license: apache2
+maintainer: cncf
+name: ArgoCD
+official_site: "https://argo-cd.readthedocs.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/argocd
+virtualization_type: vm

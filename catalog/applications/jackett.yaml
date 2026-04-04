@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 9117
+description: API support for torrent trackers
+docker_image: "lscr.io/linuxserver/jackett:latest"
+language: csharp
+license: gpl2
+maintainer: linuxserver
+name: Jackett
+official_site: "https://github.com/Jackett/Jackett"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-xs-1
+source: external/jackett
+virtualization_type: lxc

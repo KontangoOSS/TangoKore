@@ -1,0 +1,6 @@
+api: "https://console.cloud.google.com"
+billing: per-second
+name: Google Cloud Platform
+provisioner: terraform
+regions: us-central1,us-east1,us-west1,europe-west1,europe-west2,asia-east1,asia-southeast1
+type: cloud

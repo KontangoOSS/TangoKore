@@ -1,0 +1,15 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 6443
+description: Container orchestration platform
+language: go
+license: apache2
+maintainer: sidero
+name: Kubernetes
+official_site: "https://kubernetes.io/"
+sizing_max: tg-xxl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-lg-1
+source: external/kubernetes
+virtualization_type: vm

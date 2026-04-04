@@ -1,0 +1,16 @@
+active: true
+category: files
+default_build: latest
+default_ports: 9000,9001
+description: S3-compatible object storage
+docker_image: "minio/minio:latest"
+language: go
+license: agpl3
+maintainer: minio
+name: MinIO
+official_site: "https://min.io/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/minio
+virtualization_type: lxc
