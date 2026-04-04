@@ -421,7 +421,7 @@ The agent buffers telemetry locally for 5 minutes and replays it on reconnect. T
 <details>
 <summary><strong>Is this production-ready?</strong></summary>
 <br />
-The underlying technologies (OpenZiti, OpenBao, Caddy, NATS) are production-grade. TangoKore is in active development — the enrollment flow, agent, and deploy pipeline are functional and tested. The SDK is stabilizing toward a v1.0 release.
+The underlying technologies (OpenZiti, OpenBao, Caddy, NATS) are production-grade. The enrollment flow, agent, and deploy pipeline are functional and tested. TangoKore has reached its v1.0 release.
 </details>
 
 <details>
