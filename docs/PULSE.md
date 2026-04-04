@@ -4,7 +4,9 @@ Pulse is how machines and applications report telemetry on the Kontango mesh. It
 
 ## How it works
 
-A pulse is a set of key-value string pairs, serialized as MessagePack and published to NATS over the Ziti overlay. The NATS subject encodes the source:
+Every enrolled machine runs a **NATS leaf node** on `localhost:4222`. Applications publish pulses to the local NATS — zero network latency. The leaf syncs upstream to the controller's NATS hub through the Ziti overlay automatically.
+
+The NATS subject encodes the source:
 
 ```
 tango.telemetry.<machineID>.<slug>
@@ -13,7 +15,9 @@ tango.telemetry.<machineID>.<slug>
 - `machineID` — the enrolled machine's unique ID
 - `slug` — the source: `system` for OS metrics, or an application slug like `kore/ticketarr`
 
-The payload is a MessagePack-encoded `map[string]string`. Typically 16-80 bytes on the wire.
+The payload is MessagePack-encoded. System pulses use positional arrays (33 bytes). Application pulses use `map[string]string` (schema-free).
+
+**Telemetry is outbound only** — machines push to the controller. Config updates flow inbound — the controller pushes to machines via `tango.config.<machineID>`.
 
 ## Wire format
 
@@ -27,16 +31,38 @@ For comparison, the same data as JSON would be 56 bytes. For a single KV pair (`
 
 ## Sending pulses from an application
 
-### HTTP API (any language)
+### NATS (direct, any language)
 
-Every enrolled machine runs a local pulse API on `127.0.0.1:8801`. Applications POST a JSON object with their slug and KV data:
+Every machine runs a NATS leaf node on `localhost:4222`. Connect with any NATS client library and publish:
+
+```sh
+# Using the NATS CLI
+nats pub tango.telemetry.local.kore/ticketarr '{"status":"healthy","version":"2.1.0"}'
+```
+
+```go
+// From Go
+nc, _ := nats.Connect("nats://localhost:4222")
+nc.Publish("tango.telemetry.local.kore/ticketarr", data)
+```
+
+```python
+# From Python
+import nats
+nc = await nats.connect("nats://localhost:4222")
+await nc.publish("tango.telemetry.local.kore/ticketarr", data)
+```
+
+The leaf handles upstream sync to the controller through Ziti. Your app never touches the network.
+
+### HTTP API (simple alternative)
+
+A local HTTP pulse API also runs on `127.0.0.1:8801` for apps that don't want a NATS client:
 
 ```sh
 curl -X POST http://localhost:8801/pulse \
   -d '{"slug":"kore/ticketarr","kv":{"status":"healthy","version":"2.1.0"}}'
 ```
-
-That's it. The agent serializes it as msgpack and publishes to NATS over Ziti.
 
 ### From a Docker container
 
