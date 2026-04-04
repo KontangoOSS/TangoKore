@@ -43,6 +43,7 @@ const (
 	SysNick            // 7
 	SysState           // 8
 	SysProfile         // 9
+	SysMemAvail        // 10: available memory in MB
 )
 
 // encodeSystemPulse packs system metrics as a msgpack array.
@@ -54,13 +55,15 @@ func encodeSystemPulse() ([]byte, error) {
 	uptime := uint32(uptimeSeconds())
 
 	// Build array — use typed values for compactness
-	arr := make([]interface{}, 10)
+	memAvail := uint32(memoryAvailMB())
+	arr := make([]interface{}, 11)
 	arr[SysHostname] = h
 	arr[SysOS] = runtime.GOOS
 	arr[SysArch] = runtime.GOARCH
 	arr[SysCPUs] = uint8(runtime.NumCPU())
 	arr[SysLoad] = loadVal
 	arr[SysMemMB] = memMB
+	arr[SysMemAvail] = memAvail
 	arr[SysUptime] = uptime
 
 	state.mu.Lock()
@@ -124,6 +127,7 @@ func decodeSystemArray(arr []interface{}) KV {
 		}
 	}
 	if v := get(SysMemMB); v != "" { kv["mem_mb"] = v }
+	if v := get(SysMemAvail); v != "" { kv["mem_avail_mb"] = v }
 	if v := get(SysUptime); v != "" { kv["up"] = v }
 	if v := get(SysNick); v != "" { kv["nick"] = v }
 	if v := get(SysState); v != "" { kv["state"] = v }

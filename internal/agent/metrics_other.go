@@ -15,6 +15,10 @@ func memoryMB() int64 {
 	return 0
 }
 
+func memoryAvailMB() int64 {
+	return 0
+}
+
 func loadAvg1() float64 {
 	return 0
 }
