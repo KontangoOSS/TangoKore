@@ -1,0 +1,16 @@
+active: false
+category: kore
+default_build: latest
+default_ports: 9000
+description: Container management platform
+docker_image: "portainer/portainer-ce:latest"
+language: go
+license: zlib
+maintainer: portainer
+name: Portainer
+official_site: "https://www.portainer.io/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/portainer
+virtualization_type: lxc

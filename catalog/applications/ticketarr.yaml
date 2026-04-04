@@ -1,0 +1,16 @@
+active: true
+category: operations
+default_build: latest
+default_ports: 9090,22
+description: Project management and ticketing
+frontend: vue
+language: go
+license: mit
+maintainer: kontango
+name: Ticketarr
+official_site: "https://github.com/KontangoOSS/ticketarr"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: kore/ticketarr
+virtualization_type: lxc

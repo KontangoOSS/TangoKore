@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 19999
+description: Real-time performance and health monitoring
+docker_image: "netdata/netdata:latest"
+language: c
+license: gpl3
+maintainer: netdata
+name: Netdata
+official_site: "https://www.netdata.cloud/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/netdata
+virtualization_type: lxc

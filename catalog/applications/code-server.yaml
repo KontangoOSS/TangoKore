@@ -1,0 +1,16 @@
+active: false
+category: building
+default_build: latest
+default_ports: 8080
+description: VS Code in the browser
+docker_image: "codercom/code-server:latest"
+language: javascript
+license: mit
+maintainer: coder
+name: Code-Server
+official_site: "https://github.com/coder/code-server"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/code-server
+virtualization_type: lxc

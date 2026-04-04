@@ -1,0 +1,5 @@
+distro: opensuse
+family: linux
+maintainer: SUSE
+name: openSUSE
+type: server

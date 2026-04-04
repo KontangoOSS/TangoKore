@@ -1,0 +1,8 @@
+bao_path: staging
+name: Staging
+priority: 2
+promote_to: prod
+slug: staging
+vmid_range_end: 499
+vmid_range_start: 400
+ziti_prefix: staging

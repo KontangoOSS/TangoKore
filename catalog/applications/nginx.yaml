@@ -1,0 +1,16 @@
+active: true
+category: networking
+default_build: latest
+default_ports: 80
+description: High-performance HTTP server and reverse proxy
+docker_image: "nginx:alpine"
+language: c
+license: bsd2
+maintainer: nginx
+name: Nginx
+official_site: "https://nginx.org/"
+sizing_max: tg-lg-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-2
+source: external/nginx
+virtualization_type: lxc

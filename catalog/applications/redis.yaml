@@ -1,0 +1,16 @@
+active: true
+category: databases
+default_build: 7-alpine
+default_ports: 6379
+description: In-memory data store — cache, message broker, queue
+docker_image: "redis:7-alpine"
+language: redis
+license: proprietary
+maintainer: redis
+name: Redis
+official_site: "https://redis.io/"
+sizing_max: tg-xxl-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-2
+source: external/redis
+virtualization_type: lxc

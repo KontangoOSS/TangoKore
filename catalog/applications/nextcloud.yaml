@@ -1,0 +1,16 @@
+active: true
+category: operations
+default_build: latest
+default_ports: 80
+description: Self-hosted productivity and collaboration platform
+docker_image: "nextcloud:apache"
+language: php
+license: agpl3
+maintainer: nextcloud
+name: Nextcloud
+official_site: "https://nextcloud.com/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/nextcloud
+virtualization_type: lxc

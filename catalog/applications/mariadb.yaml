@@ -1,0 +1,16 @@
+active: false
+category: databases
+default_build: latest
+default_ports: 3306
+description: MySQL-compatible relational database with enhanced features
+docker_image: "mariadb:11"
+language: cpp
+license: gpl2
+maintainer: mariadb
+name: MariaDB
+official_site: "https://mariadb.org/"
+sizing_max: tg-lg-2
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/mariadb
+virtualization_type: lxc

@@ -1,0 +1,15 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 2375
+description: Container platform for building and running applications
+language: go
+license: apache2
+maintainer: docker
+name: Docker
+official_site: "https://www.docker.com/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/docker
+virtualization_type: vm

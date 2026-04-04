@@ -1,0 +1,5 @@
+distro: alpine
+family: linux
+maintainer: Alpine
+name: Alpine Linux
+type: container

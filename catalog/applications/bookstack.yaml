@@ -1,0 +1,16 @@
+active: false
+category: learning
+default_build: latest
+default_ports: 80
+description: Simple, self-hosted wiki platform
+docker_image: "lscr.io/linuxserver/bookstack:latest"
+language: php
+license: mit
+maintainer: bookstack
+name: BookStack
+official_site: "https://www.bookstackapp.com/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/bookstack
+virtualization_type: lxc

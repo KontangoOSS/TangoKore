@@ -1,0 +1,13 @@
+services:
+  hello:
+    image: busybox:latest
+    env_file: .env
+    command: >
+      sh -c 'echo "=== Hello World ===" &&
+             echo "GREETING=$$GREETING" &&
+             echo "SECRET_COLOR=$$SECRET_COLOR" &&
+             echo "SECRET_API_KEY=$$SECRET_API_KEY" &&
+             echo "=== Secrets injected by Bao agent ===" &&
+             echo "Sleeping to keep container alive..." &&
+             sleep 3600'
+    restart: unless-stopped

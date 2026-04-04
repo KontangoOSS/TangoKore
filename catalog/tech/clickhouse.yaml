@@ -1,0 +1,4 @@
+name: ClickHouse
+protocol: tcp
+runtime: server
+type: database

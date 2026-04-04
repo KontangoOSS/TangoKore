@@ -1,0 +1,6 @@
+description: Making things happen on their own
+name: Automation
+vmid_dev_end: 52999
+vmid_dev_start: 50000
+vmid_prod_end: 5299
+vmid_prod_start: 5000

@@ -1,0 +1,4 @@
+name: Gin
+protocol: http
+runtime: compiled
+type: framework

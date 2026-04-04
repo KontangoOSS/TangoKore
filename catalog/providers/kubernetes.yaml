@@ -1,0 +1,4 @@
+billing: none
+name: Kubernetes
+provisioner: helm,helmfile
+type: orchestrator

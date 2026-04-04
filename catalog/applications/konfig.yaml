@@ -1,0 +1,16 @@
+active: true
+category: operations
+default_build: latest
+default_ports: 8080,22
+description: Infrastructure configuration manager
+language: go
+license: mit
+maintainer: kontango
+name: Konfig
+official_site: "https://github.com/KontangoOSS/konfig"
+repo_url: "https://github.com/KontangoOSS/konfig"
+sizing_max: tg-md-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-2
+source: kore/konfig
+virtualization_type: lxc

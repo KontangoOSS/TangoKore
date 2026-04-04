@@ -1,0 +1,6 @@
+based_on: debian
+distro: proxmox
+family: linux
+maintainer: Proxmox
+name: Proxmox VE
+type: hypervisor

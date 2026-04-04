@@ -1,0 +1,16 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 1280,3022,3023,22
+description: Zero-trust overlay network
+docker_image: "openziti/ziti-controller:latest"
+language: go
+license: apache2
+maintainer: openziti
+name: OpenZiti
+official_site: "https://openziti.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/openziti
+virtualization_type: lxc

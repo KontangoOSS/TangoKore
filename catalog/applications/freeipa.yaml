@@ -1,0 +1,16 @@
+active: false
+category: security
+default_build: latest
+default_ports: 443
+description: Identity management for Linux/Unix networks
+docker_image: "freeipa/freeipa-server:latest"
+language: python
+license: gpl3
+maintainer: keycloak
+name: FreeIPA
+official_site: "https://www.freeipa.org/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/freeipa
+virtualization_type: vm

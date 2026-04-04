@@ -1,0 +1,15 @@
+active: true
+category: security
+default_build: latest
+default_ports: 8446
+description: Zero-trust browser access — clientless overlay via OpenZiti BrowZer
+language: javascript
+license: apache2
+maintainer: kontango
+name: BrowZer UI
+official_site: "https://openziti.io/docs/reference/tunnelers/browzer/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: kore/browzer-ui
+virtualization_type: lxc

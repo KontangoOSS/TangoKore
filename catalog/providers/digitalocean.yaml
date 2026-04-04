@@ -1,0 +1,6 @@
+api: "https://api.digitalocean.com/v2"
+billing: hourly
+name: DigitalOcean
+provisioner: terraform
+regions: nyc1,nyc3,sfo3,lon1,ams3,sgp1,fra1,tor1,blr1,syd1
+type: cloud

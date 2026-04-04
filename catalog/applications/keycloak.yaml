@@ -1,0 +1,17 @@
+active: false
+category: security
+default_build: latest
+default_ports: 8080
+description: Open source identity and access management
+docker_image: "quay.io/keycloak/keycloak:latest"
+language: java
+license: apache2
+maintainer: keycloak
+name: Keycloak
+official_site: "https://www.keycloak.org/"
+repo_url: "https://github.com/KontangoOSS/keycloak"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/keycloak
+virtualization_type: lxc

@@ -1,0 +1,16 @@
+active: true
+category: learning
+default_build: latest
+default_ports: 80
+description: Popular content management system
+docker_image: "wordpress:latest"
+language: php
+license: gpl2
+maintainer: wordpress
+name: WordPress
+official_site: "https://wordpress.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/wordpress
+virtualization_type: lxc

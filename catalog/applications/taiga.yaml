@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 9000
+description: Agile project management platform
+docker_image: "taigaio/taiga-back:latest"
+language: python
+license: agpl3
+maintainer: plane
+name: Taiga
+official_site: "https://www.taiga.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/taiga
+virtualization_type: lxc

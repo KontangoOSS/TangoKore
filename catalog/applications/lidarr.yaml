@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 8686
+description: Music collection manager for Usenet and BitTorrent
+docker_image: "lscr.io/linuxserver/lidarr:latest"
+language: csharp
+license: gpl3
+maintainer: linuxserver
+name: Lidarr
+official_site: "https://lidarr.audio/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/lidarr
+virtualization_type: lxc

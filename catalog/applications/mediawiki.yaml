@@ -1,0 +1,16 @@
+active: false
+category: learning
+default_build: latest
+default_ports: 80
+description: Wiki software powering Wikipedia
+docker_image: "mediawiki:latest"
+language: php
+license: gpl2
+maintainer: apache-foundation
+name: MediaWiki
+official_site: "https://www.mediawiki.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/mediawiki
+virtualization_type: lxc

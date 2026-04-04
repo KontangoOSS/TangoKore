@@ -1,0 +1,5 @@
+distro: alma
+family: linux
+maintainer: AlmaLinux OS Foundation
+name: AlmaLinux
+type: server

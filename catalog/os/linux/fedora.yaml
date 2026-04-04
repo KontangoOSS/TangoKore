@@ -1,0 +1,5 @@
+distro: fedora
+family: linux
+maintainer: Fedora Project
+name: Fedora
+type: workstation

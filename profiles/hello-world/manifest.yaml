@@ -1,0 +1,19 @@
+profile: hello-world
+version: v0.1.0
+description: Test profile — busybox container that prints secrets from Bao
+
+files:
+  - path: bao-agent.hcl
+    dest: /opt/kontango/bao-agent.hcl
+  - path: compose.yml
+    dest: /opt/kontango/profiles/hello-world/compose.yml
+
+secrets:
+  path: secret/data/apps/hello-world
+  keys:
+    - greeting
+    - color
+    - api_key
+
+restart:
+  - kontango-bao-agent

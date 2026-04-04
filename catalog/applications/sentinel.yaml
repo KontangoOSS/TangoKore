@@ -1,0 +1,16 @@
+active: true
+category: security
+default_build: latest
+default_ports: 8080,22
+depends_on: clickhouse
+description: Honeypot traffic monitoring
+language: go
+license: mit
+maintainer: kontango
+name: Sentinel
+official_site: "https://github.com/KontangoOSS/sentinel"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: kore/sentinel
+virtualization_type: lxc

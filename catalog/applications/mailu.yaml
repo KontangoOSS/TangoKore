@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 443
+description: Simple yet full-featured email server
+docker_image: "mailu/admin:latest"
+language: python
+license: mit
+maintainer: kontango
+name: Mailu
+official_site: "https://mailu.io/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/mailu
+virtualization_type: lxc

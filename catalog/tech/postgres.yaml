@@ -1,0 +1,4 @@
+name: PostgreSQL
+protocol: tcp
+runtime: server
+type: database

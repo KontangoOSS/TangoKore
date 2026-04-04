@@ -1,0 +1,5 @@
+distro: desktop
+family: windows
+maintainer: Microsoft
+name: Windows
+type: desktop

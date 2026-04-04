@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 9000
+description: Self-hosted recipe manager and meal planner
+docker_image: "ghcr.io/mealie-recipes/mealie:latest"
+language: python
+license: agpl3
+maintainer: kontango
+name: Mealie
+official_site: "https://mealie.io/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/mealie
+virtualization_type: lxc

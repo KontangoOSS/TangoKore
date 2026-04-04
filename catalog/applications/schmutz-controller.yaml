@@ -1,0 +1,15 @@
+active: true
+category: security
+default_build: latest
+default_ports: 3080,443
+description: Join service, node bootstrap, split-key enrollment
+language: go
+license: mit
+maintainer: kontango
+name: Schmutz Controller
+official_site: "https://github.com/KontangoOSS/kontango-controller"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: kore/schmutz-controller
+virtualization_type: lxc

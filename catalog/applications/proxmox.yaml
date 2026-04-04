@@ -1,0 +1,15 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 8006,3128,111,22
+description: Open-source hypervisor and container platform
+language: perl
+license: agpl3
+maintainer: proxmox
+name: Proxmox VE
+official_site: "https://www.proxmox.com/"
+sizing_max: tg-xxl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-lg-1
+source: external/proxmox
+virtualization_type: bare

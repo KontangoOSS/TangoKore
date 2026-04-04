@@ -1,0 +1,6 @@
+api: "https://api.vultr.com/v2"
+billing: hourly
+name: Vultr
+provisioner: terraform
+regions: ewr,ord,dfw,sea,lax,atl,sjc,ams,fra,lhr,sgp,nrt,syd
+type: cloud

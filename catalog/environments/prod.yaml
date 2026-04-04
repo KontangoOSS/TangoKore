@@ -1,0 +1,8 @@
+bao_path: prod
+name: Production
+priority: 1
+promote_from: qa
+slug: prod
+vmid_range_end: 199
+vmid_range_start: 100
+ziti_prefix: prod

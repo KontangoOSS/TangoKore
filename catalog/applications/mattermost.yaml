@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 8065
+description: Secure collaboration platform
+docker_image: "mattermost/mattermost-team-edition:latest"
+language: go
+license: agpl3
+maintainer: mattermost
+name: Mattermost
+official_site: "https://mattermost.com/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/mattermost
+virtualization_type: lxc

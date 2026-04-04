@@ -1,0 +1,8 @@
+aws_type: t3.medium
+disk_gb: 32
+do_slug: s-2vcpu-4gb
+memory_mb: 4096
+name: Medium
+proxmox_template: vm-md
+use_case: Production apps, CI/CD, moderate databases
+vcpus: 2

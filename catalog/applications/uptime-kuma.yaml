@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 3001
+description: Self-hosted uptime monitoring tool
+docker_image: "louislam/uptime-kuma:latest"
+language: javascript
+license: mit
+maintainer: uptime-kuma
+name: Uptime-Kuma
+official_site: "https://github.com/louislam/uptime-kuma"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/uptime-kuma
+virtualization_type: lxc

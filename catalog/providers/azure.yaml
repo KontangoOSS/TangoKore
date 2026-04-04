@@ -1,0 +1,6 @@
+api: "https://portal.azure.com"
+billing: hourly
+name: Microsoft Azure
+provisioner: terraform
+regions: eastus,eastus2,westus,westus2,westeurope,northeurope,uksouth,southeastasia,japaneast
+type: cloud

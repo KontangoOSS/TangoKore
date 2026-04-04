@@ -1,0 +1,16 @@
+active: false
+category: storage
+default_build: latest
+default_ports: 6789
+description: Distributed storage system
+docker_image: "ceph/ceph:latest"
+language: cpp
+license: lgpl3
+maintainer: cncf
+name: Ceph
+official_site: "https://ceph.io/"
+sizing_max: tg-xl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-lg-1
+source: external/ceph
+virtualization_type: vm

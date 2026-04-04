@@ -1,0 +1,16 @@
+active: false
+category: networking
+default_build: latest
+default_ports: 80
+description: Popular open source HTTP server
+docker_image: "httpd:2.4-alpine"
+language: c
+license: apache2
+maintainer: apache-foundation
+name: Apache
+official_site: "https://httpd.apache.org/"
+sizing_max: tg-md-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-2
+source: external/apache
+virtualization_type: lxc

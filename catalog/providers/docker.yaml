@@ -1,0 +1,4 @@
+billing: none
+name: Docker
+provisioner: docker-compose
+type: container

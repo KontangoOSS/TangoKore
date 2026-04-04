@@ -1,0 +1,28 @@
+# Copy this file as {your-app-slug}.yaml and fill in all fields.
+# See ../SCHEMA.md for field descriptions and valid values.
+#
+# Slug rules: lowercase, hyphens only, DNS-safe, max 30 chars.
+# Example: my-cool-app.yaml
+
+active: true
+name:
+description:
+category:
+license:
+language:
+maintainer:
+source:
+official_site:
+default_ports:
+default_build: latest
+virtualization_type: lxc
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+sizing_max: tg-md-1
+
+# Optional — uncomment if applicable:
+# docker_image:
+# frontend:
+# framework:
+# depends_on:
+# repo_url:

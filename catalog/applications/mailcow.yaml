@@ -1,0 +1,17 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 443
+description: Dockerized email server suite
+docker_image: "mailcow/mailcow-dockerized:latest"
+language: php
+license: gpl3
+maintainer: kontango
+name: Mailcow
+official_site: "https://mailcow.email/"
+repo_url: "https://github.com/KontangoOSS/mailcow"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/mailcow
+virtualization_type: lxc
