@@ -202,13 +202,24 @@ func Run(ctx context.Context, boot BootConfig, logger *slog.Logger) error {
 			continue
 		}
 		testConn.Close()
-		logger.Info("ziti overlay verified, switching to NATS telemetry")
+		logger.Info("ziti overlay verified, starting leaf node")
 
-		// Run NATS telemetry + config subscription — both on the same NATS connection.
-		// Telemetry publishes to tango.telemetry.<machineID>
-		// Config subscribes to tango.config.<machineID>
-		runTelemetryLoop(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, logger)
-		zitiCtx.Close()
+		// Start embedded NATS leaf node — local API on :4222, upstream via Ziti.
+		leaf, leafErr := StartLeaf(zitiCtx, &LeafOpts{
+			StoreDir:        filepath.Join(filepath.Dir(boot.IdentityPath), "nats"),
+			UpstreamService: boot.telemetrySvc(),
+		}, logger)
+		if leafErr != nil {
+			logger.Warn("leaf node failed, falling back to direct NATS", "error", leafErr)
+			// Fall back to direct NATS connection (no local leaf)
+			runTelemetryLoop(ctx, zitiCtx, boot, machineID, eventCh, intervalCh, logger)
+			zitiCtx.Close()
+		} else {
+			// Use the leaf's in-process connection for telemetry.
+			runTelemetryWithLeaf(ctx, leaf, machineID, eventCh, intervalCh, logger)
+			leaf.Shutdown()
+			zitiCtx.Close()
+		}
 
 		if ctx.Err() != nil {
 			return nil
@@ -270,6 +281,47 @@ func runFallbackUntilOverlay(ctx context.Context, boot BootConfig, machineID str
 				logger.Info("ziti became available, promoting to overlay")
 				return
 			}
+		}
+	}
+}
+
+// runTelemetryWithLeaf publishes telemetry and subscribes to config using
+// the leaf node's in-process NATS connection. The leaf syncs upstream
+// to the hub automatically — the agent just talks to localhost.
+func runTelemetryWithLeaf(ctx context.Context, leaf *LeafNode, machineID string, eventCh chan []byte, intervalCh chan time.Duration, logger *slog.Logger) {
+	nc := leaf.Conn()
+
+	// Subscribe to config instructions.
+	configSubject := "tango.config." + machineID
+	nc.Subscribe(configSubject, func(msg *natsgo.Msg) {
+		var instr Instruction
+		if err := json.Unmarshal(msg.Data, &instr); err != nil {
+			return
+		}
+		logger.Info("config received via leaf", "type", instr.Type)
+		handleInstruction(instr, BootConfig{}, machineID, nil, eventCh, intervalCh, logger)
+	})
+	logger.Info("leaf subscribed to config", "subject", configSubject)
+
+	// Publish telemetry from the event channel.
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case d := <-intervalCh:
+			_ = d // interval changes handled by collector
+		case payload, ok := <-eventCh:
+			if !ok {
+				return
+			}
+			// Extract slug from framed pulse message.
+			slug, data, err := decodePulseMessage(payload)
+			if err != nil {
+				slug = "unknown"
+				data = payload
+			}
+			subject := "tango.telemetry." + machineID + "." + slug
+			nc.Publish(subject, data)
 		}
 	}
 }
