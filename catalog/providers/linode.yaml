@@ -1,0 +1,6 @@
+api: "https://api.linode.com/v4"
+billing: hourly
+name: Linode (Akamai)
+provisioner: terraform
+regions: us-east,us-central,us-west,eu-west,eu-central,ap-south,ap-southeast,ap-northeast
+type: cloud

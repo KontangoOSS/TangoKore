@@ -1,0 +1,6 @@
+description: Overlay networks, DNS, firewalls, load balancers
+name: Networking
+vmid_dev_end: 24999
+vmid_dev_start: 20000
+vmid_prod_end: 2499
+vmid_prod_start: 2000

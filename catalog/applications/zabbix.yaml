@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 10051
+description: Enterprise monitoring solution
+docker_image: "zabbix/zabbix-server-pgsql:latest"
+language: c
+license: gpl2
+maintainer: kontango
+name: Zabbix
+official_site: "https://www.zabbix.com/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/zabbix
+virtualization_type: lxc

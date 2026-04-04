@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 80
+description: Self-hosted RSS feed aggregator
+docker_image: "freshrss/freshrss:latest"
+language: php
+license: agpl3
+maintainer: kontango
+name: FreshRSS
+official_site: "https://freshrss.org/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/freshrss
+virtualization_type: lxc

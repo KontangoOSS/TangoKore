@@ -1,0 +1,8 @@
+aws_type: t3.small
+disk_gb: 16
+do_slug: s-2vcpu-2gb
+memory_mb: 2048
+name: Small+
+proxmox_template: ct-sm2
+use_case: Multi-container apps, medium traffic
+vcpus: 2

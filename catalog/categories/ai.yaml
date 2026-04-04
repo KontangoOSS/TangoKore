@@ -1,0 +1,6 @@
+description: LLM inference, model serving, training, RAG
+name: "AI & ML"
+vmid_dev_end: 66999
+vmid_dev_start: 62000
+vmid_prod_end: 6699
+vmid_prod_start: 6200

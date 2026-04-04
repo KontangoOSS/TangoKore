@@ -1,0 +1,16 @@
+active: false
+category: networking
+default_build: latest
+default_ports: 1194
+description: Robust and flexible VPN solution
+docker_image: "kylemanna/openvpn:latest"
+language: c
+license: gpl2
+maintainer: apache-foundation
+name: OpenVPN
+official_site: "https://openvpn.net/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/openvpn
+virtualization_type: lxc

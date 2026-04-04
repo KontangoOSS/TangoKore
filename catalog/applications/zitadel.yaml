@@ -1,0 +1,16 @@
+active: true
+category: security
+default_build: latest
+default_ports: 8085
+description: Identity management — OIDC, SAML, passwordless
+docker_image: "ghcr.io/zitadel/zitadel:latest"
+language: go
+license: apache2
+maintainer: zitadel
+name: ZITADEL
+official_site: "https://zitadel.com/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/zitadel
+virtualization_type: lxc

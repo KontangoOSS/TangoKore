@@ -1,0 +1,8 @@
+aws_type: m5.2xlarge
+disk_gb: 200
+do_slug: g-8vcpu-32gb
+memory_mb: 32768
+name: Large Plus
+proxmox_template: vm-lg-plus
+use_case: Large databases, multi-service deployments
+vcpus: 8

@@ -1,0 +1,16 @@
+active: true
+category: security
+default_build: latest
+default_ports: 443
+description: L4 zero-trust edge firewall — JA4 fingerprinting, HP defense
+github: KontangoOSS/schmutz
+language: go
+license: mit
+maintainer: kontango
+name: Schmutz
+official_site: "https://github.com/KontangoOSS/schmutz"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: kore/schmutz
+virtualization_type: lxc

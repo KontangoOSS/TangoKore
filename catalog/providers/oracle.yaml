@@ -1,0 +1,6 @@
+api: "https://cloud.oracle.com"
+billing: hourly
+name: Oracle Cloud
+provisioner: terraform
+regions: us-ashburn-1,us-phoenix-1,eu-frankfurt-1,eu-amsterdam-1,uk-london-1,ap-tokyo-1
+type: cloud

@@ -1,0 +1,6 @@
+description: Object storage, file systems, backup, replication
+name: Storage
+vmid_dev_end: 19999
+vmid_dev_start: 18000
+vmid_prod_end: 1999
+vmid_prod_start: 1800

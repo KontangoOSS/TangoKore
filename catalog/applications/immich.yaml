@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 2283
+description: Self-hosted photo and video backup solution
+docker_image: "ghcr.io/immich-app/immich-server:latest"
+language: javascript
+license: agpl3
+maintainer: immich
+name: Immich
+official_site: "https://immich.app/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/immich
+virtualization_type: vm

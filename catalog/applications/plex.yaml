@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 32400
+description: Media server for streaming personal content
+docker_image: "plexinc/pms-docker:latest"
+language: cpp
+license: proprietary
+maintainer: plex
+name: Plex
+official_site: "https://www.plex.tv/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/plex
+virtualization_type: vm

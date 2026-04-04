@@ -1,0 +1,5 @@
+distro: server
+family: windows
+maintainer: Microsoft
+name: Windows Server
+type: server

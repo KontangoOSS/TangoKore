@@ -1,0 +1,6 @@
+api: "https://www.alibabacloud.com"
+billing: hourly
+name: Alibaba Cloud
+provisioner: terraform
+regions: cn-hangzhou,cn-shanghai,cn-beijing,us-west-1,eu-central-1,ap-southeast-1
+type: cloud

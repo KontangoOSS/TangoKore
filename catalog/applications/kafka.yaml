@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 9092
+description: Distributed event streaming platform
+docker_image: "confluentinc/cp-kafka:latest"
+language: java
+license: apache2
+maintainer: apache-foundation
+name: Kafka
+official_site: "https://kafka.apache.org/"
+sizing_max: tg-xl-1
+sizing_min: tg-md-1
+sizing_suggested: tg-lg-1
+source: external/kafka
+virtualization_type: lxc

@@ -1,0 +1,6 @@
+description: The stuff you set up once and hope it keeps running
+name: Kore
+vmid_dev_end: 37999
+vmid_dev_start: 33000
+vmid_prod_end: 3799
+vmid_prod_start: 3300

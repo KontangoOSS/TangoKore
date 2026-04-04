@@ -1,0 +1,16 @@
+active: false
+category: files
+default_build: latest
+default_ports: none
+description: Fast, secure backup program
+docker_image: "restic/restic:latest"
+language: go
+license: bsd2
+maintainer: restic
+name: Restic
+official_site: "https://restic.net/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/restic
+virtualization_type: lxc

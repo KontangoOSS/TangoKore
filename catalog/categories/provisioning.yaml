@@ -1,0 +1,6 @@
+description: PXE boot, cloud-init, machine enrollment, IaC
+name: Provisioning
+vmid_dev_end: 55999
+vmid_dev_start: 53000
+vmid_prod_end: 5599
+vmid_prod_start: 5300

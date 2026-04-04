@@ -1,0 +1,16 @@
+active: true
+category: kore
+default_build: 2.0.0
+default_ports: 8888,18080
+description: Zero-trust tunnel sharing — public/private shares over Ziti
+docker_image: "openziti/zrok:latest"
+language: go
+license: apache2
+maintainer: openziti
+name: zrok
+official_site: "https://zrok.io/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/openziti/zrok
+virtualization_type: lxc

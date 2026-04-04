@@ -1,0 +1,5 @@
+distro: macos
+family: darwin
+maintainer: Apple
+name: macOS
+type: desktop

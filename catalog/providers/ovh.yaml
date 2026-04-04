@@ -1,0 +1,6 @@
+api: "https://api.ovh.com"
+billing: monthly
+name: OVHcloud
+provisioner: terraform
+regions: gra,sbg,bhs,waw,sgp,syd
+type: cloud

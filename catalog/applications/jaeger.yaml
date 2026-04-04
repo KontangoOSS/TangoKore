@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 16686
+description: Distributed tracing platform
+docker_image: "jaegertracing/all-in-one:latest"
+language: go
+license: apache2
+maintainer: cncf
+name: Jaeger
+official_site: "https://www.jaegertracing.io/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/jaeger
+virtualization_type: lxc

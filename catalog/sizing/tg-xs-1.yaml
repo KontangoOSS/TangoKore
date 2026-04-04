@@ -1,0 +1,8 @@
+aws_type: t3.nano
+disk_gb: 4
+do_slug: s-1vcpu-512mb-10gb
+memory_mb: 512
+name: Extra Small
+proxmox_template: ct-xs
+use_case: Static sites, docs, lightweight tools
+vcpus: 1

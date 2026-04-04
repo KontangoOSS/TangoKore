@@ -1,0 +1,15 @@
+active: true
+category: security
+default_build: none
+default_ports: none
+description: Identity and access management design — persons, services, devices
+language: go
+license: mit
+maintainer: kontango
+name: IAM
+official_site: "https://github.com/KontangoOSS/iam"
+sizing_max: tg-md-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: kreate/iam
+virtualization_type: lxc

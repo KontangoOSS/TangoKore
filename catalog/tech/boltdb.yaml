@@ -1,0 +1,4 @@
+name: BoltDB
+protocol: file
+runtime: embedded
+type: database

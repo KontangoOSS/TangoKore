@@ -1,0 +1,5 @@
+distro: rocky
+family: linux
+maintainer: Rocky Enterprise
+name: Rocky Linux
+type: server

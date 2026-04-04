@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 8000
+description: Product analytics and feature flagging
+docker_image: "posthog/posthog:latest"
+language: python
+license: mit
+maintainer: posthog
+name: PostHog
+official_site: "https://posthog.com/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/posthog
+virtualization_type: lxc

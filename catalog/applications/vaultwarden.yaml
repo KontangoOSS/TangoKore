@@ -1,0 +1,16 @@
+active: true
+category: security
+default_build: latest
+default_ports: 80,22
+description: Password manager
+docker_image: "vaultwarden/server:latest"
+language: rust
+license: agpl3
+maintainer: kontango
+name: Vaultwarden
+official_site: "https://github.com/dani-garcia/vaultwarden"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-xs-1
+source: external/vaultwarden
+virtualization_type: lxc

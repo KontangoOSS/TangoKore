@@ -1,0 +1,6 @@
+distro: talos
+family: linux
+immutable: true
+maintainer: Sidero Labs
+name: Talos Linux
+type: kubernetes

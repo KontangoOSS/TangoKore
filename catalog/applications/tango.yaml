@@ -1,0 +1,15 @@
+active: true
+category: kore
+default_build: latest
+default_ports: 3080,443
+description: Zero-trust machine enrollment — one command, any machine
+language: go
+license: mit
+maintainer: kontango
+name: Tango
+official_site: "https://github.com/KontangoOSS/tango"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: kore/tango
+virtualization_type: lxc

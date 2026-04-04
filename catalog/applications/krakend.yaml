@@ -1,0 +1,17 @@
+active: true
+category: networking
+default_build: latest
+default_ports: 8080
+description: Ultra-high performance API gateway
+docker_image: "devopsfaith/krakend:latest"
+language: go
+license: apache2
+maintainer: krakend
+name: KrakenD
+official_site: "https://www.krakend.io/"
+repo_url: "https://github.com/KontangoOSS/krakend"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/krakend
+virtualization_type: lxc

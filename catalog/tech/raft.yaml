@@ -1,0 +1,3 @@
+name: Raft
+runtime: consensus
+type: protocol

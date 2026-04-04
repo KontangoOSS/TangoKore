@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 5000
+description: Open source email delivery platform
+docker_image: "ghcr.io/postalserver/postal:latest"
+language: ruby
+license: mit
+maintainer: kontango
+name: Postal
+official_site: "https://docs.postalserver.io/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-2
+sizing_suggested: tg-md-1
+source: external/postal
+virtualization_type: lxc

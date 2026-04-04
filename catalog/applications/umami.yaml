@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 3000
+description: Simple, fast web analytics alternative
+docker_image: "ghcr.io/umami-software/umami:postgresql-latest"
+language: javascript
+license: mit
+maintainer: umami
+name: Umami
+official_site: "https://umami.is/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/umami
+virtualization_type: lxc

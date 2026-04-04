@@ -1,0 +1,4 @@
+name: Vue.js
+protocol: https
+runtime: browser
+type: framework

@@ -1,0 +1,5 @@
+distro: flatcar
+family: linux
+maintainer: Microsoft
+name: Flatcar Container Linux
+type: container-os

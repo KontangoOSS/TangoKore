@@ -1,0 +1,16 @@
+active: false
+category: monitoring
+default_build: latest
+default_ports: 3100
+description: Horizontally scalable log aggregation system
+docker_image: "grafana/loki:latest"
+language: go
+license: agpl3
+maintainer: grafana
+name: Loki
+official_site: "https://grafana.com/oss/loki/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/loki
+virtualization_type: lxc

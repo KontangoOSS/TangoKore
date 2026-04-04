@@ -1,0 +1,4 @@
+name: S3
+protocol: https
+runtime: api
+type: protocol

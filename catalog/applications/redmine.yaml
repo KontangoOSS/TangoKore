@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 3000
+description: Flexible project management web application
+docker_image: "redmine:latest"
+language: ruby
+license: gpl2
+maintainer: kontango
+name: Redmine
+official_site: "https://www.redmine.org/"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/redmine
+virtualization_type: lxc

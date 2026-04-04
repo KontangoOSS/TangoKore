@@ -1,0 +1,6 @@
+api: "https://api.hetzner.cloud/v1"
+billing: hourly
+name: Hetzner
+provisioner: terraform
+regions: fsn1,nbg1,hel1,ash,hil
+type: cloud

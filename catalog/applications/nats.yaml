@@ -1,0 +1,16 @@
+active: false
+category: communication
+default_build: latest
+default_ports: 4222
+description: High-performance cloud native messaging system
+docker_image: "nats:alpine"
+language: go
+license: apache2
+maintainer: cncf
+name: NATS
+official_site: "https://nats.io/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/nats
+virtualization_type: lxc

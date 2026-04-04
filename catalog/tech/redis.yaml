@@ -1,0 +1,4 @@
+name: Redis
+protocol: tcp
+runtime: server
+type: database

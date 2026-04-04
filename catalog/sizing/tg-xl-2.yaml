@@ -1,0 +1,8 @@
+aws_type: m5.4xlarge
+disk_gb: 500
+do_slug: g-16vcpu-64gb
+memory_mb: 65536
+name: Extra Large Plus
+proxmox_template: vm-xl-plus
+use_case: GPU workloads, heavy compute, data warehouses
+vcpus: 16

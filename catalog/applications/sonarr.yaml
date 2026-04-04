@@ -1,0 +1,16 @@
+active: false
+category: creative
+default_build: latest
+default_ports: 8989
+description: PVR for Usenet and BitTorrent users
+docker_image: "lscr.io/linuxserver/sonarr:latest"
+language: csharp
+license: gpl3
+maintainer: linuxserver
+name: Sonarr
+official_site: "https://sonarr.tv/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/sonarr
+virtualization_type: lxc

@@ -1,0 +1,16 @@
+active: false
+category: automation
+default_build: latest
+default_ports: 5678
+description: Workflow automation tool
+docker_image: "n8nio/n8n:latest"
+language: javascript
+license: proprietary
+maintainer: n8n
+name: n8n
+official_site: "https://n8n.io/"
+sizing_max: tg-sm-2
+sizing_min: tg-xs-1
+sizing_suggested: tg-sm-1
+source: external/n8n
+virtualization_type: lxc

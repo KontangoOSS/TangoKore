@@ -1,0 +1,17 @@
+active: true
+category: building
+default_build: latest
+default_ports: 8000,22
+depends_on: forgejo
+description: Continuous integration and deployment
+docker_image: "woodpeckerci/woodpecker-server:latest"
+language: go
+license: apache2
+maintainer: woodpecker
+name: Woodpecker CI
+official_site: "https://woodpecker-ci.org/"
+sizing_max: tg-lg-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-md-1
+source: external/woodpecker
+virtualization_type: lxc

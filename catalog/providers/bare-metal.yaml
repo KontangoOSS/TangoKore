@@ -1,0 +1,4 @@
+billing: varies
+name: Bare Metal
+provisioner: netbootxyz,ansible
+type: physical

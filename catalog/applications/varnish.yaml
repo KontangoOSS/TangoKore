@@ -1,0 +1,16 @@
+active: false
+category: networking
+default_build: latest
+default_ports: 80
+description: HTTP accelerator and reverse proxy cache
+docker_image: "varnish:latest"
+language: c
+license: bsd2
+maintainer: kontango
+name: Varnish
+official_site: "https://varnish-cache.org/"
+sizing_max: tg-md-2
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/varnish
+virtualization_type: lxc

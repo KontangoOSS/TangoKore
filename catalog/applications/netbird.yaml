@@ -1,0 +1,17 @@
+active: false
+category: networking
+default_build: latest
+default_ports: 443
+description: Open source WireGuard-based VPN platform
+docker_image: "netbirdio/netbird:latest"
+language: go
+license: bsd3
+maintainer: netbird
+name: NetBird
+official_site: "https://netbird.io/"
+repo_url: "https://github.com/KontangoOSS/netbird"
+sizing_max: tg-md-1
+sizing_min: tg-sm-1
+sizing_suggested: tg-sm-2
+source: external/netbird
+virtualization_type: lxc

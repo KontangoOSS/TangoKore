@@ -1,0 +1,16 @@
+active: false
+category: operations
+default_build: latest
+default_ports: 80
+description: Application dashboard and launcher
+docker_image: "lscr.io/linuxserver/heimdall:latest"
+language: php
+license: mit
+maintainer: kontango
+name: Heimdall
+official_site: "https://heimdall.site/"
+sizing_max: tg-sm-1
+sizing_min: tg-xs-1
+sizing_suggested: tg-xs-1
+source: external/heimdall
+virtualization_type: lxc
