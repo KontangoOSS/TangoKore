@@ -40,24 +40,3 @@ func encodeEvent(machineID, evType string, payload interface{}) ([]byte, error) 
 	return buf.Bytes(), nil
 }
 
-// decodeEvent decompresses and deserialises an event from the wire.
-func decodeEvent(b []byte) (*Event, error) {
-	r, err := zlib.NewReader(bytes.NewReader(b))
-	if err != nil {
-		return nil, err
-	}
-	defer r.Close()
-	var ev Event
-	if err := json.NewDecoder(r).Decode(&ev); err != nil {
-		return nil, err
-	}
-	return &ev, nil
-}
-
-// collector sends compressed events to a channel as fast as it can.
-// Each collector runs in its own goroutine and is started once.
-type collector interface {
-	// collect runs until ctx is done. It writes compressed Event bytes to out
-	// as soon as each sample is ready. Use encodeEvent to produce bytes.
-	collect(ctx interface{ Done() <-chan struct{} }, machineID string, out chan<- []byte)
-}
