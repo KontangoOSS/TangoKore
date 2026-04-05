@@ -39,7 +39,7 @@
 
 ### Contents
 
-[What is TangoKore?](#what-is-tangokore) · [Quick Start](#-quick-start) · [Architecture](#architecture) · [Components](#components) · [How Enrollment Works](#how-enrollment-works) · [Modes](#modes) · [Deploy an App](#deploy-an-application) · [Secret Management](#secret-management) · [Platform Support](#platform-support) · [FAQ](#faq) · [Contributing](#contributing)
+[What is TangoKore?](#what-is-tangokore) · [Quick Start](#-quick-start) · [Architecture](#architecture) · [Components](#components) · [How Enrollment Works](#how-enrollment-works) · [Modes](#modes) · [Deploy an App](#deploy-an-application) · [Secret Management](#secret-management) · [Platform Support](#platform-support) · [Privacy & Compliance](#privacy--compliance) · [FAQ](#faq) · [Contributing](#contributing)
 
 ---
 
@@ -429,6 +429,59 @@ The underlying technologies (OpenZiti, OpenBao, Caddy, NATS) are production-grad
 <br />
 Yes. The components are independent. You can use OpenZiti without TangoKore. You can use Schmutz without enrollment. You can use the Bao agent without the rest. TangoKore is the glue, not a cage.
 </details>
+
+<br />
+
+## Privacy & Compliance
+
+**Your data, your control.**
+
+TangoKore collects machine fingerprints (hostname, CPU, memory, MAC addresses) to identify machines uniquely. You have complete control over where this data goes:
+
+### Public Enrollment
+Use Kontango's public controller (`ctrl.example.com`):
+- Fingerprints securely transmitted (TLS 1.3)
+- Processed by Kontango infrastructure
+- GDPR & CCPA compliant
+- Data deletion available anytime
+- See [PRIVACY.md](PRIVACY.md) for details
+
+### Private Controller
+Run your own Kontango controller:
+- Fingerprints never leave your infrastructure
+- Completely private and under your control
+- Air-gap from public internet
+- Full compliance responsibility (you decide retention, access, encryption)
+- Self-hosting guide: [docs.example.com/self-hosted](https://docs.example.com/self-hosted)
+
+### Before Enrollment
+Users see a clear disclosure:
+```
+MACHINE FINGERPRINTING DISCLOSURE
+This machine will send hardware information to identify itself:
+  • Hostname, OS version, kernel, architecture
+  • CPU model/cores, system memory, motherboard ID
+  • Network interface MAC addresses
+
+Why: Allows returning machines to be recognized and restore their
+previous permissions. This is public hardware info only.
+```
+
+Interactive users can review collected data and abort (`n` key) before confirming.
+
+### Legal & Transparency
+- **[ULA.md](ULA.md)** — Universal License Agreement with full data handling terms
+- **[PRIVACY.md](PRIVACY.md)** — Privacy controls and compliance checklists
+- **example.com/privacy** — Public privacy policy (for public enrollment)
+
+### Data Subject Rights
+If using public enrollment, you have:
+- **Right to Access:** What fingerprints Kontango stores about your machines
+- **Right to Delete:** Request deletion anytime (contact privacy@example.com)
+- **Right to Portability:** Export your machine identity certificate
+- **Right to Correction:** Update identifiers
+
+Contact: **privacy@example.com**
 
 <br />
 
