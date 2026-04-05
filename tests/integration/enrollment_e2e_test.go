@@ -38,13 +38,14 @@ func TestE2E_PreAuthAnnouncement(t *testing.T) {
 		log.Printf("[SERVER]   hardware_hash: %v", receivedPayload["hardware_hash"])
 
 		// Verify required fields are present
-		if method, ok := receivedPayload["method"].(string); !ok || method == "" {
-			http.Error(w, "missing method", http.StatusBadRequest)
+		// Note: method is no longer sent by client; server determines it
+		if hostname, ok := receivedPayload["hostname"].(string); !ok || hostname == "" {
+			http.Error(w, "missing hostname", http.StatusBadRequest)
 			return
 		}
 
-		if hostname, ok := receivedPayload["hostname"].(string); !ok || hostname == "" {
-			http.Error(w, "missing hostname", http.StatusBadRequest)
+		if hardwareHash, ok := receivedPayload["hardware_hash"].(string); !ok || hardwareHash == "" {
+			http.Error(w, "missing hardware_hash", http.StatusBadRequest)
 			return
 		}
 
@@ -118,7 +119,7 @@ func TestE2E_PreAuthAnnouncement(t *testing.T) {
 	log.Printf("[CLIENT] Method: new (unknown machine)\n")
 
 	// Call SSEEnroll (the machine announcing itself)
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "", "")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)
@@ -129,12 +130,15 @@ func TestE2E_PreAuthAnnouncement(t *testing.T) {
 		t.Fatal("server never received payload")
 	}
 
-	if method, ok := receivedPayload["method"].(string); !ok || method != "new" {
-		t.Errorf("expected method='new', got %v", receivedPayload["method"])
-	}
+	// Note: Client no longer sends method field. Server determines it.
+	// Just verify the machine data was received.
 
 	if hostname, ok := receivedPayload["hostname"].(string); !ok || hostname == "" {
 		t.Errorf("expected hostname, got %v", receivedPayload["hostname"])
+	}
+
+	if hardwareHash, ok := receivedPayload["hardware_hash"].(string); !ok || hardwareHash == "" {
+		t.Errorf("expected hardware_hash, got %v", receivedPayload["hardware_hash"])
 	}
 
 	log.Printf("\n[CLIENT] ✓ Server received announcement with hostname: %v", receivedPayload["hostname"])
@@ -158,24 +162,23 @@ func TestE2E_ReturningMachineFlow(t *testing.T) {
 		t.Skip("skipping integration test (set KONTANGO_INTEGRATION=1 to run)")
 	}
 
-	var receivedMethod string
-
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		var payload map[string]interface{}
 		decoder.Decode(&payload)
 
-		receivedMethod, _ = payload["method"].(string)
-
-		log.Printf("[SERVER] Received announcement: method=%s", receivedMethod)
+		// Server always fingerprint-matches automatically
+		// No method field sent from client
+		log.Printf("[SERVER] Received announcement from machine")
 
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
 
 		flusher := w.(http.Flusher)
 
-		if receivedMethod == "scan" {
-			log.Printf("[SERVER] Scan method detected - checking fingerprint history...")
+		// Server checks: does fingerprint match history?
+		// For this test, we assume it matches
+		log.Printf("[SERVER] Checking fingerprint history...")
 
 			// Fingerprint match found!
 			data := map[string]interface{}{
@@ -199,7 +202,6 @@ func TestE2E_ReturningMachineFlow(t *testing.T) {
 			flusher.Flush()
 
 			log.Printf("[SERVER] Status: approved (restored previous identity)")
-		}
 
 		// Send identity with restored ACL
 		identity := map[string]interface{}{
@@ -237,10 +239,6 @@ func TestE2E_ReturningMachineFlow(t *testing.T) {
 	log.Printf("[CLIENT] ✓ Previous identity restored: %s", result.ID)
 	log.Printf("[CLIENT] ✓ Status: %s (privileges restored)\n", result.Status)
 
-	if receivedMethod != "scan" {
-		t.Errorf("expected method='scan', got %q", receivedMethod)
-	}
-
 	if result.Status != "approved" {
 		t.Errorf("expected status 'approved' for returning machine, got %q", result.Status)
 	}
@@ -262,9 +260,8 @@ func TestE2E_AppRoleAuthFlow(t *testing.T) {
 
 		receivedRoleID, _ = payload["role_id"].(string)
 		receivedSecretID, _ = payload["secret_id"].(string)
-		method, _ := payload["method"].(string)
 
-		log.Printf("[SERVER] Received announcement: method=%s", method)
+		log.Printf("[SERVER] Received announcement with AppRole credentials")
 		log.Printf("[SERVER] Validating AppRole credentials...")
 
 		if receivedRoleID == "test-role-id" && receivedSecretID == "test-secret-id" {
@@ -327,7 +324,7 @@ func TestE2E_AppRoleAuthFlow(t *testing.T) {
 	log.Printf("[CLIENT] This machine has AppRole credentials (pre-provisioned)")
 	log.Printf("[CLIENT] Enrolling with --role-id and --secret-id\n")
 
-	result, err := enroll.SSEEnroll(server.URL, "approle", "", "test-role-id", "test-secret-id")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "test-role-id", "test-secret-id")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)
@@ -635,7 +632,7 @@ func TestE2E_FullLoggedFlow(t *testing.T) {
 	log.Printf("Connecting to enrollment server: %s", server.URL)
 	log.Printf("")
 
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "", "")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)
