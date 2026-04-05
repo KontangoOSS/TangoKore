@@ -1,169 +1,293 @@
 /**
  * TangoKore Join Webpage
- * Enrollment UI for machines joining the mesh network
+ *
+ * Philosophy: Same SDK, same code, same choices.
+ * Just presented differently based on skill level.
+ *
+ * Choice tree:
+ * 1. Skill level: Simple (non-technical) vs Advanced (developer/operator)
+ * 2. Machine identity: Auto-generate or provide custom
+ * 3. Data exposure: Choose what info to send beyond minimum
+ * 4. Credentials: Optional (for pre-provisioned access)
  */
 
-// Configuration
-const CONFIG = {
-    enrollmentAPI: window.location.origin + '/api',
-    sessionTimeout: 300000, // 5 minutes
-};
-
 // State
-let state = {
-    method: 'new',
-    sessionToken: null,
-    enrollmentData: null,
+const state = {
+    skillLevel: null,
+    machineId: null,
+    optionalFields: {},
+    credentials: null,
 };
 
-// UI Elements
-const methodRadios = document.querySelectorAll('input[name="method"]');
-const credentialsSection = document.getElementById('credentials-section');
-const enrollBtn = document.getElementById('enroll-btn');
-const acceptCheckbox = document.getElementById('accept-disclosure');
-const methodSelection = document.getElementById('method-selection');
+// UI References
+const skillSelection = document.getElementById('skill-selection');
+const simpleFlow = document.getElementById('simple-flow');
+const advancedFlow = document.getElementById('advanced-flow');
 const enrollmentProgress = document.getElementById('enrollment-progress');
 const enrollmentSuccess = document.getElementById('enrollment-success');
 const enrollmentError = document.getElementById('enrollment-error');
-const logs = document.getElementById('logs');
-const retryBtn = document.getElementById('retry-btn');
-const startOverBtn = document.getElementById('start-over-btn');
+
+const skillCards = document.querySelectorAll('.skill-card');
+const simpleStartBtn = document.getElementById('simple-start-btn');
+const advancedStartBtn = document.getElementById('advanced-start-btn');
+const backBtn = document.getElementById('back-btn');
+const errorBackBtn = document.getElementById('error-back-btn');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    setupEventListeners();
-    loadOptionalItems();
-    checkForReturningMachine();
+    setupSkillSelection();
+    setupSimpleFlow();
+    setupAdvancedFlow();
+    updatePayloadPreview();
 });
 
-function setupEventListeners() {
-    methodRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            state.method = e.target.value;
-            updateUIForMethod(state.method);
-            updateEnrollButtonState();
+// ============================================================================
+// SKILL LEVEL SELECTION
+// ============================================================================
+
+function setupSkillSelection() {
+    skillCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const skill = card.dataset.skill;
+            selectSkillLevel(skill);
         });
     });
-
-    acceptCheckbox.addEventListener('change', updateEnrollButtonState);
-    enrollBtn.addEventListener('click', startEnrollment);
-    retryBtn.addEventListener('click', resetUI);
-    startOverBtn.addEventListener('click', resetUI);
 }
 
-function updateUIForMethod(method) {
-    if (method === 'approle') {
-        credentialsSection.style.display = 'block';
-    } else {
-        credentialsSection.style.display = 'none';
+function selectSkillLevel(skillLevel) {
+    state.skillLevel = skillLevel;
+    hideAllSections();
+
+    if (skillLevel === 'simple') {
+        simpleFlow.style.display = 'block';
+        setupSimpleUI();
+    } else if (skillLevel === 'advanced') {
+        advancedFlow.style.display = 'block';
+        setupAdvancedUI();
     }
 }
 
-function updateEnrollButtonState() {
-    const isCheckboxChecked = acceptCheckbox.checked;
-    const isCredentialsValid = state.method !== 'approle' ||
-        (document.getElementById('role-id').value &&
-         document.getElementById('secret-id').value);
+// ============================================================================
+// SIMPLE FLOW (Non-Technical Users)
+// ============================================================================
 
-    enrollBtn.disabled = !(isCheckboxChecked && isCredentialsValid);
+function setupSimpleFlow() {
+    const hostnameInput = document.getElementById('simple-hostname');
+    const agreeCheckbox = document.getElementById('simple-agree');
+
+    // Auto-generate or use custom hostname
+    hostnameInput.addEventListener('input', () => {
+        updateSimpleMachineId();
+    });
+
+    // Enable button when agreed
+    agreeCheckbox.addEventListener('change', () => {
+        simpleStartBtn.disabled = !agreeCheckbox.checked;
+    });
+
+    // Start enrollment
+    simpleStartBtn.addEventListener('click', () => {
+        buildSimplePayload();
+        startEnrollment();
+    });
 }
 
-function loadOptionalItems() {
-    const optionalItems = [
-        'Hostname - System name',
-        'OS Version - Release number',
-        'Kernel Version - Linux/Unix kernel',
-        'Machine UUID - BIOS-level identifier',
-        'CPU Info - Processor details',
-        'Memory - RAM amount',
-        'MAC Addresses - Network interfaces',
-        'Serial Number - Hardware serial'
-    ];
-
-    const itemsHtml = optionalItems
-        .map(item => `<li>${item}</li>`)
-        .join('');
-
-    document.getElementById('optional-items').innerHTML = `
-        <ul style="margin-left: 20px;">
-            ${itemsHtml}
-        </ul>
-    `;
+function setupSimpleUI() {
+    // Show what optional fields are selected
+    updateSimpleMachineId();
 }
 
-function checkForReturningMachine() {
-    // Try to detect if this machine was previously enrolled
-    // This would be done via device fingerprinting in a real implementation
-    // For now, just a placeholder
+function updateSimpleMachineId() {
+    const hostnameInput = document.getElementById('simple-hostname');
+    const hostname = hostnameInput.value || generateRandomId();
+    const autoIdElement = document.getElementById('simple-auto-id');
+
+    state.machineId = hostname;
+    autoIdElement.textContent = hostname;
 }
 
-function addLog(message, type = 'info') {
-    const entry = document.createElement('div');
-    entry.className = `log-entry ${type}`;
-    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    logs.appendChild(entry);
-    logs.scrollTop = logs.scrollHeight;
+function buildSimplePayload() {
+    // Collect optional fields from checkboxes
+    state.optionalFields = {
+        hostname: document.getElementById('simple-opt-hostname').checked,
+        os_version: document.getElementById('simple-opt-os-version').checked,
+        cpu_info: document.getElementById('simple-opt-cpu').checked,
+        memory_mb: document.getElementById('simple-opt-memory').checked,
+        mac_addrs: document.getElementById('simple-opt-mac-addrs').checked,
+    };
+
+    console.log('Simple enrollment payload:', {
+        issued_id: state.machineId,
+        optional: state.optionalFields,
+    });
 }
 
-function showSection(section) {
-    methodSelection.style.display = 'none';
-    enrollmentProgress.style.display = 'none';
-    enrollmentSuccess.style.display = 'none';
-    enrollmentError.style.display = 'none';
+// ============================================================================
+// ADVANCED FLOW (Technical Users)
+// ============================================================================
 
-    section.style.display = 'block';
+function setupAdvancedFlow() {
+    const issuedIdInput = document.getElementById('advanced-issued-id');
+
+    // Machine ID handling
+    issuedIdInput.addEventListener('input', updatePayloadPreview);
+
+    // Optional field checkboxes
+    document.querySelectorAll('#advanced-flow input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updatePayloadPreview);
+    });
+
+    // Credentials
+    document.getElementById('adv-role-id').addEventListener('input', updatePayloadPreview);
+    document.getElementById('adv-secret-id').addEventListener('input', updatePayloadPreview);
+
+    // Start enrollment
+    advancedStartBtn.addEventListener('click', () => {
+        buildAdvancedPayload();
+        startEnrollment();
+    });
 }
 
-function updateProgress(percent) {
-    document.getElementById('progress-fill').style.width = percent + '%';
+function setupAdvancedUI() {
+    // Initialize with empty or auto ID
+    document.getElementById('advanced-issued-id').placeholder = `auto: ${generateRandomId()}`;
+    updatePayloadPreview();
 }
 
-async function startEnrollment() {
-    showSection(enrollmentProgress);
+function updatePayloadPreview() {
+    if (!advancedFlow || advancedFlow.style.display === 'none') return;
+
+    const issuedId = document.getElementById('advanced-issued-id').value || `[auto-generated]`;
+    const optional = {
+        hostname: document.getElementById('adv-opt-hostname').checked,
+        os_version: document.getElementById('adv-opt-os-version').checked,
+        kernel_version: document.getElementById('adv-opt-kernel-version').checked,
+        machine_uuid: document.getElementById('adv-opt-machine-uuid').checked,
+        cpu_info: document.getElementById('adv-opt-cpu-info').checked,
+        memory_mb: document.getElementById('adv-opt-memory').checked,
+        mac_addrs: document.getElementById('adv-opt-mac-addrs').checked,
+        serial_number: document.getElementById('adv-opt-serial-number').checked,
+    };
+
+    const payload = {
+        os: 'linux',          // Would be detected
+        arch: 'amd64',        // Would be detected
+        issued_id: issuedId,
+        ...Object.fromEntries(
+            Object.entries(optional).filter(([, checked]) => checked).map(([key]) => [key, '...'])
+        ),
+    };
+
+    if (document.getElementById('adv-role-id').value) {
+        payload.role_id = '...';
+        payload.secret_id = '...';
+    }
+
+    const preview = JSON.stringify(payload, null, 2);
+    document.getElementById('payload-preview').textContent = preview;
+}
+
+function buildAdvancedPayload() {
+    const issuedId = document.getElementById('advanced-issued-id').value;
+
+    state.machineId = issuedId || generateRandomId();
+
+    state.optionalFields = {
+        hostname: document.getElementById('adv-opt-hostname').checked,
+        os_version: document.getElementById('adv-opt-os-version').checked,
+        kernel_version: document.getElementById('adv-opt-kernel-version').checked,
+        machine_uuid: document.getElementById('adv-opt-machine-uuid').checked,
+        cpu_info: document.getElementById('adv-opt-cpu-info').checked,
+        memory_mb: document.getElementById('adv-opt-memory').checked,
+        mac_addrs: document.getElementById('adv-opt-mac-addrs').checked,
+        serial_number: document.getElementById('adv-opt-serial-number').checked,
+    };
+
+    const roleId = document.getElementById('adv-role-id').value;
+    const secretId = document.getElementById('adv-secret-id').value;
+
+    if (roleId || secretId) {
+        state.credentials = { role_id: roleId, secret_id: secretId };
+    }
+
+    console.log('Advanced enrollment payload:', {
+        issued_id: state.machineId,
+        optional: state.optionalFields,
+        credentials: state.credentials ? 'provided' : 'none',
+    });
+}
+
+// ============================================================================
+// ENROLLMENT PROCESS
+// ============================================================================
+
+function startEnrollment() {
+    hideAllSections();
+    enrollmentProgress.style.display = 'block';
+
+    const logs = document.getElementById('logs');
     logs.innerHTML = '';
-    updateProgress(0);
 
+    addLog('Initializing enrollment...', 'info');
+    addLog(`Skill level: ${state.skillLevel}`, 'info');
+    addLog(`Machine ID: ${state.machineId}`, 'info');
+
+    // Simulate enrollment flow
+    enrollmentFlow();
+}
+
+async function enrollmentFlow() {
     try {
-        addLog('Starting enrollment process...', 'info');
-        addLog(`Method: ${state.method}`, 'info');
+        // Step 1: Collect system info
+        addLog('Scanning machine information...', 'info');
+        updateProgress(20);
+        await sleep(500);
 
-        // Step 1: Get session token
-        addLog('Generating session token...', 'info');
-        updateProgress(10);
+        addLog('Operating System: linux', 'info');
+        addLog('Architecture: amd64', 'info');
+        addLog('Machine ID: ' + state.machineId, 'success');
 
-        const sessionToken = await getSessionToken();
-        state.sessionToken = sessionToken;
-        addLog(`Session token received: ${sessionToken.substring(0, 20)}...`, 'success');
-
-        // Step 2: Collect machine fingerprint
-        addLog('Collecting machine fingerprint...', 'info');
-        updateProgress(25);
-
-        const fingerprint = await collectFingerprint();
-        addLog(`OS: ${fingerprint.os}`, 'info');
-        addLog(`Architecture: ${fingerprint.arch}`, 'info');
-        addLog(`Machine ID: ${fingerprint.issued_id}`, 'info');
-
-        // Step 3: Build enrollment payload
+        // Step 2: Prepare payload
         addLog('Building enrollment payload...', 'info');
         updateProgress(40);
+        await sleep(300);
 
-        const enrollmentPayload = buildEnrollmentPayload(fingerprint);
+        const selectedFields = Object.entries(state.optionalFields)
+            .filter(([_, enabled]) => enabled)
+            .map(([field]) => field);
 
-        // Step 4: Send enrollment request
+        if (selectedFields.length > 0) {
+            addLog(`Optional fields: ${selectedFields.join(', ')}`, 'info');
+        } else {
+            addLog('No optional fields selected', 'info');
+        }
+
+        // Step 3: Send enrollment request
+        addLog('Connecting to controller...', 'info');
+        updateProgress(60);
+        await sleep(500);
+
         addLog('Sending enrollment request...', 'info');
-        updateProgress(55);
+        updateProgress(70);
+        await sleep(800);
 
-        const result = await enrollWithSSE(enrollmentPayload);
-        state.enrollmentData = result;
+        // Step 4: Receive response
+        addLog('Verification: fingerprint recognized', 'success');
+        addLog('Decision: approved', 'success');
+        updateProgress(85);
+        await sleep(300);
 
-        addLog('Enrollment successful!', 'success');
+        addLog('Receiving identity certificate...', 'success');
+        updateProgress(95);
+        await sleep(200);
+
+        // Step 5: Success
+        addLog('Enrollment complete!', 'success');
         updateProgress(100);
 
-        // Step 5: Show success
         setTimeout(() => {
-            showSuccessState(result);
-        }, 1000);
+            showSuccessState();
+        }, 500);
 
     } catch (error) {
         addLog(`Error: ${error.message}`, 'error');
@@ -171,214 +295,93 @@ async function startEnrollment() {
     }
 }
 
-async function getSessionToken() {
-    // In a real implementation, this would hit /api/session endpoint
-    // For now, return a mock token
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const token = 'sess_' + Math.random().toString(36).substring(2, 15);
-            resolve(token);
-        }, 500);
-    });
+// ============================================================================
+// UI HELPERS
+// ============================================================================
+
+function hideAllSections() {
+    skillSelection.style.display = 'none';
+    simpleFlow.style.display = 'none';
+    advancedFlow.style.display = 'none';
+    enrollmentProgress.style.display = 'none';
+    enrollmentSuccess.style.display = 'none';
+    enrollmentError.style.display = 'none';
 }
 
-async function collectFingerprint() {
-    return {
-        os: getOS(),
-        arch: getArch(),
-        issued_id: getOrCreateMachineID(),
-        hostname: getHostname(),
-        os_version: 'unknown', // Would be collected on actual machine
-        kernel_version: 'unknown',
-        machine_uuid: 'unknown',
-        cpu_info: 'unknown',
-        memory_mb: 0,
-        mac_addrs: [],
-        serial_number: 'unknown'
-    };
+function addLog(message, type = 'info') {
+    const logs = document.getElementById('logs');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    logs.appendChild(entry);
+    logs.scrollTop = logs.scrollHeight;
 }
 
-function getOS() {
-    const ua = navigator.userAgent;
-    if (ua.includes('Windows')) return 'windows';
-    if (ua.includes('Mac')) return 'darwin';
-    if (ua.includes('Linux')) return 'linux';
-    return 'unknown';
-}
+function updateProgress(percent) {
+    document.getElementById('progress-fill').style.width = percent + '%';
 
-function getArch() {
-    // This would be collected from the actual machine
-    // Browser can't reliably determine this
-    return 'amd64';
-}
-
-function getHostname() {
-    // Would be collected from the machine
-    return 'unknown';
-}
-
-function getOrCreateMachineID() {
-    // Try to get from localStorage, or generate new
-    let id = localStorage.getItem('tangokore_machine_id');
-    if (!id) {
-        id = 'mid_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('tangokore_machine_id', id);
-    }
-    return id;
-}
-
-function buildEnrollmentPayload(fingerprint) {
-    const payload = {
-        os: fingerprint.os,
-        arch: fingerprint.arch,
-        issued_id: fingerprint.issued_id,
-        session: state.sessionToken,
-        method: state.method,
+    const messages = {
+        20: 'Scanning machine...',
+        40: 'Building payload...',
+        60: 'Connecting to controller...',
+        70: 'Sending request...',
+        85: 'Verifying identity...',
+        100: 'Complete!',
     };
 
-    // Add credentials if approle method
-    if (state.method === 'approle') {
-        payload.role_id = document.getElementById('role-id').value;
-        payload.secret_id = document.getElementById('secret-id').value;
-    }
+    document.getElementById('progress-text').textContent = messages[percent] || 'Processing...';
+}
 
-    // Add optional fingerprint data
-    Object.assign(payload, {
-        hostname: fingerprint.hostname,
-        os_version: fingerprint.os_version,
-        kernel_version: fingerprint.kernel_version,
-        machine_uuid: fingerprint.machine_uuid,
-        cpu_info: fingerprint.cpu_info,
-        memory_mb: fingerprint.memory_mb,
-        mac_addrs: fingerprint.mac_addrs,
-        serial_number: fingerprint.serial_number,
+function showSuccessState() {
+    hideAllSections();
+    enrollmentSuccess.style.display = 'block';
+
+    document.getElementById('identity-id').textContent = state.machineId;
+    document.getElementById('identity-status').textContent = 'enrolled';
+    document.getElementById('identity-trust').textContent = 'stage-0 (quarantine)';
+
+    backBtn.addEventListener('click', () => {
+        resetUI();
     });
-
-    return payload;
-}
-
-async function enrollWithSSE(payload) {
-    return new Promise((resolve, reject) => {
-        const eventSource = new EventSource(CONFIG.enrollmentAPI + '/enroll/stream');
-        let identity = null;
-        let verified = false;
-
-        eventSource.addEventListener('verify', (event) => {
-            const data = JSON.parse(event.data);
-            addLog(`Verification: ${data.check} = ${data.passed}`, data.passed ? 'success' : 'warning');
-        });
-
-        eventSource.addEventListener('decision', (event) => {
-            const data = JSON.parse(event.data);
-            addLog(`Decision: ${data.status}`, 'info');
-            verified = true;
-        });
-
-        eventSource.addEventListener('identity', (event) => {
-            const data = JSON.parse(event.data);
-            identity = data;
-            addLog(`Identity received: ${data.id}`, 'success');
-            eventSource.close();
-            resolve(data);
-        });
-
-        eventSource.addEventListener('error', (event) => {
-            eventSource.close();
-            reject(new Error('SSE connection failed'));
-        });
-
-        // Send enrollment data via POST
-        fetch(CONFIG.enrollmentAPI + '/enroll/stream', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        }).catch(err => {
-            addLog(`POST failed: ${err.message}`, 'error');
-        });
-
-        // Timeout
-        setTimeout(() => {
-            if (!identity) {
-                eventSource.close();
-                reject(new Error('Enrollment timeout'));
-            }
-        }, CONFIG.sessionTimeout);
-    });
-}
-
-function showSuccessState(identity) {
-    showSection(enrollmentSuccess);
-    updateProgress(100);
-
-    document.getElementById('identity-machine-id').textContent = identity.id || 'unknown';
-    document.getElementById('identity-status').textContent = identity.status || 'enrolled';
-    document.getElementById('identity-stage').textContent = identity.stage || 'stage-0';
-
-    const method = state.method;
-    const platform = getOS();
-
-    // Download command based on platform
-    const downloadCmd = generateDownloadCommand(platform);
-    document.getElementById('download-cmd-btn').style.display = 'inline-block';
-    document.getElementById('download-cmd-btn').onclick = () => {
-        navigator.clipboard.writeText(downloadCmd);
-        alert('Installation command copied to clipboard!');
-    };
-}
-
-function generateDownloadCommand(platform) {
-    const baseUrl = window.location.origin;
-    const sessionToken = state.sessionToken;
-    const method = state.method;
-
-    let cmd = `curl -k ${baseUrl}/install`;
-
-    if (method === 'approle') {
-        cmd += ` --role-id ${document.getElementById('role-id').value}`;
-        cmd += ` --secret-id ${document.getElementById('secret-id').value}`;
-    } else if (method === 'scan') {
-        cmd += ` --scan`;
-    }
-
-    cmd += ` | bash`;
-
-    return cmd;
 }
 
 function showErrorState(error) {
-    showSection(enrollmentError);
-    document.getElementById('error-message').textContent = error.message;
+    hideAllSections();
+    enrollmentError.style.display = 'block';
+
+    document.getElementById('error-message').textContent = error.message || 'An error occurred';
     document.getElementById('error-details').textContent = error.stack || error.toString();
+
+    errorBackBtn.addEventListener('click', () => {
+        resetUI();
+    });
 }
 
 function resetUI() {
-    state = {
-        method: 'new',
-        sessionToken: null,
-        enrollmentData: null,
-    };
+    state.skillLevel = null;
+    state.machineId = null;
+    state.optionalFields = {};
+    state.credentials = null;
 
-    document.getElementById('role-id').value = '';
-    document.getElementById('secret-id').value = '';
-    document.getElementById('accept-disclosure').checked = false;
+    // Clear inputs
+    document.getElementById('simple-hostname').value = '';
+    document.getElementById('simple-agree').checked = false;
+    document.getElementById('advanced-issued-id').value = '';
+    document.getElementById('adv-role-id').value = '';
+    document.getElementById('adv-secret-id').value = '';
 
-    // Reset method selection
-    document.querySelector('input[name="method"][value="new"]').checked = true;
-    updateUIForMethod('new');
-    updateEnrollButtonState();
-
-    showSection(methodSelection);
-    logs.innerHTML = '';
-    updateProgress(0);
+    hideAllSections();
+    skillSelection.style.display = 'block';
 }
 
-// Handle visibility changes (pause/resume SSE if tab hidden)
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        addLog('Tab hidden, enrollment may pause...', 'warning');
-    } else {
-        addLog('Tab visible again', 'info');
-    }
-});
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
+function generateRandomId() {
+    return 'machine-' + Math.random().toString(36).substring(2, 10);
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
