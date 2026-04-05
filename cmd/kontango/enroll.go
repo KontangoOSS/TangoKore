@@ -91,6 +91,25 @@ func runEnroll(url, session, roleID, secretID string, scanMethod bool) error {
 	// If credentials are provided, the server will validate them.
 	// Otherwise, the machine will be processed as new or returning (fingerprint match).
 
+	log.Println("═══════════════════════════════════════════════════════════════")
+	log.Println("MACHINE FINGERPRINTING DISCLOSURE")
+	log.Println("═══════════════════════════════════════════════════════════════")
+	log.Println("")
+	log.Println("This machine will send hardware information to identify itself:")
+	log.Println("  • Hostname, OS version, kernel, architecture")
+	log.Println("  • CPU model/cores, system memory, motherboard ID")
+	log.Println("  • Network interface MAC addresses")
+	log.Println("")
+	log.Println("Why: Allows returning machines to be recognized and restore their")
+	log.Println("previous permissions. This is public hardware info only — no")
+	log.Println("passwords, API keys, or secrets are included.")
+	log.Println("")
+	log.Println("Privacy: If you run your own controller, only you see this data.")
+	log.Println("If using public ctrl.example.com, equivalent to a DNS lookup.")
+	log.Println("")
+	log.Println("═══════════════════════════════════════════════════════════════")
+	log.Println("")
+
 	log.Println("enrolling…")
 	// Always pass empty string for method - server determines it based on data
 	sseResult, err := enroll.SSEEnroll(url, "", session, roleID, secretID)
