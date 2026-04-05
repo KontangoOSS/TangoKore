@@ -1,0 +1,67 @@
+site_name: TangoKore SDK
+site_description: Zero-trust machine enrollment - You are your password
+repo_url: https://github.com/KontangoOSS/TangoKore
+repo_name: KontangoOSS/TangoKore
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: blue
+      accent: indigo
+    - scheme: slate
+      primary: blue
+      accent: indigo
+
+plugins:
+  - search
+  - tags
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Your First Machine: getting-started/first-machine.md
+    - Understanding Trust Levels: getting-started/trust-levels.md
+  - Philosophy:
+    - Why Fingerprinting: philosophy/why-fingerprinting.md
+    - You Are Your Password: philosophy/you-are-your-password.md
+    - Never Forget: philosophy/never-forget.md
+  - User Guide:
+    - Enrollment Flows: user-guide/enrollment-flows.md
+    - Managing Your Profile: user-guide/managing-profile.md
+    - Recovery & Backup: user-guide/recovery-backup.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Enrollment Design: architecture/enrollment-design.md
+    - Trust Model: architecture/trust-model.md
+  - Operations:
+    - Deployment: operations/deployment.md
+    - Monitoring: operations/monitoring.md
+    - Troubleshooting: operations/troubleshooting.md
+  - Testing:
+    - Integration Testing: testing/integration-testing.md
+    - Test Scenarios: testing/scenarios.md
+  - Privacy & Compliance:
+    - Privacy Policy: privacy/privacy.md
+    - License Agreement: privacy/license.md
+    - FAQ: privacy/faq.md
+  - API Reference:
+    - Endpoints: api/endpoints.md
+    - Events: api/events.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.emoji
+  - toc:
+      permalink: true
