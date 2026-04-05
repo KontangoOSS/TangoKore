@@ -545,6 +545,9 @@ func (m enrollModel) viewConfirm() string {
 	var b strings.Builder
 	b.WriteString(styleSectionTitle.Render("Confirm enrollment") + "\n\n")
 
+	// Fingerprinting disclosure
+	b.WriteString(styleDim.Render("This machine will send the following to identify itself:") + "\n\n")
+
 	if m.fp != nil {
 		rows := [][]string{
 			{"Hostname:", m.fp.Hostname},
@@ -558,6 +561,10 @@ func (m enrollModel) viewConfirm() string {
 		for _, row := range rows {
 			b.WriteString(styleLabel.Render(row[0]) + styleValue.Render(row[1]) + "\n")
 		}
+		b.WriteString("\n")
+		b.WriteString(styleDim.Render("Why: Allows returning machines to be recognized and restore\n"))
+		b.WriteString(styleDim.Render("their previous permissions. Public hardware info only — no\n"))
+		b.WriteString(styleDim.Render("secrets included. " + styleValue.Render("Read the docs") + " for more.\n\n"))
 	}
 
 	if m.showProfiles {
