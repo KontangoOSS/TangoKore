@@ -476,6 +476,7 @@ previous permissions. This is public hardware info only.
 Interactive users can review collected data and abort (`n` key) before confirming.
 
 ### Legal & Transparency
+- **[SCHMUTZ_PHILOSOPHY.md](SCHMUTZ_PHILOSOPHY.md)** — "You are your fingerprint": identity through consistency and behavior
 - **[MIRANDA_RIGHTS.md](MIRANDA_RIGHTS.md)** — What's required (minimum) vs. optional in the SDK
 - **[ULA.md](ULA.md)** — Universal License Agreement with full data handling terms
 - **[PRIVACY.md](PRIVACY.md)** — Privacy controls and compliance checklists
