@@ -39,16 +39,50 @@ type SSEEvent struct {
 // SSEEnrollStream is like SSEEnroll but emits events to eventFn as they arrive.
 // Returns the final EnrollResult when the identity event is received.
 // eventFn may be called from a goroutine; it must be safe to call concurrently.
-func SSEEnrollStream(url, method, session, roleID, secretID string, eventFn func(SSEEvent)) (*EnrollResult, error) {
+//
+// The endpoint always receives the same message format (machine data).
+// The server determines the method (new/scan/trusted) based on:
+// - Fingerprint matching (does it have history?)
+// - Credentials provided (AppRole, JWT, etc.)
+// - Server policy
+//
+// Deprecated parameters (method, session, roleID, secretID, profile) are kept
+// for backward compatibility but should not be used. All enrollment goes through
+// the same endpoint with the same message format.
+func SSEEnrollStream(url, method, session, roleID, secretID, profile string, eventFn func(SSEEvent)) (*EnrollResult, error) {
 	os := ProbeOS()
 	hw := ProbeHardware()
 	net := ProbeNetwork()
 	sys := ProbeSystem()
 
-	payload := map[string]interface{}{"method": method, "session": session}
-	if roleID != "" {
+	// All machines send the same message format to the same endpoint.
+	// The server determines what method applies (new/scan/trusted/etc)
+	// based on the data and its own policy.
+	payload := map[string]interface{}{}
+
+	// Always send machine data
+	for _, m := range []map[string]interface{}{os, hw, net, sys} {
+		for k, v := range m {
+			if k != "type" {
+				payload[k] = v
+			}
+		}
+	}
+
+	// Optionally send credentials if provided (server will validate)
+	if roleID != "" && secretID != "" {
 		payload["role_id"] = roleID
 		payload["secret_id"] = secretID
+	}
+
+	// Optionally send session token if provided
+	if session != "" {
+		payload["session"] = session
+	}
+
+	// Optionally send profile preference if provided
+	if profile != "" {
+		payload["profile"] = profile
 	}
 	for _, m := range []map[string]interface{}{os, hw, net, sys} {
 		for k, v := range m {
@@ -158,15 +192,19 @@ func SSEEnrollStream(url, method, session, roleID, secretID string, eventFn func
 }
 
 // SSEEnroll sends all probe data in one POST and reads SSE events back.
-// This is the v2 enrollment path — one request, streaming response.
+// This is the enrollment path — one request, streaming response.
+// It calls SSEEnrollStream with a logging callback for verbose output.
+//
+// The enrollment endpoint receives machine data and the server determines
+// whether this is a new, returning, or trusted machine based on:
+// - Machine fingerprint (has it enrolled before?)
+// - Credentials (AppRole, JWT, session token)
+// - Server policy
+//
+// Deprecated: The method parameter should not be used. Pass empty string
+// and let the server determine the enrollment method based on credentials.
 func SSEEnroll(url, method, session, roleID, secretID string) (*EnrollResult, error) {
-	// Collect all probe data upfront
-	os := ProbeOS()
-	hw := ProbeHardware()
-	net := ProbeNetwork()
-	sys := ProbeSystem()
-
-	// Build the combined payload
+	// Collect probe data to log before sending
 	payload := map[string]interface{}{
 		"method":  method,
 		"session": session,
@@ -175,31 +213,16 @@ func SSEEnroll(url, method, session, roleID, secretID string) (*EnrollResult, er
 		payload["role_id"] = roleID
 		payload["secret_id"] = secretID
 	}
-
-	// Merge all probe data into the payload
-	for k, v := range os {
-		if k != "type" {
-			payload[k] = v
-		}
-	}
-	for k, v := range hw {
-		if k != "type" {
-			payload[k] = v
-		}
-	}
-	for k, v := range net {
-		if k != "type" {
-			payload[k] = v
-		}
-	}
-	for k, v := range sys {
-		if k != "type" {
-			payload[k] = v
+	// Merge all probe data to get it for logging
+	for _, m := range []map[string]interface{}{ProbeOS(), ProbeHardware(), ProbeNetwork(), ProbeSystem()} {
+		for k, v := range m {
+			if k != "type" {
+				payload[k] = v
+			}
 		}
 	}
 
-	body, _ := json.Marshal(payload)
-
+	// Log machine info
 	log.Printf("  hostname:    %s", payload["hostname"])
 	log.Printf("  os:          %s", payload["os_version"])
 	log.Printf("  arch:        %s", payload["arch"])
@@ -207,105 +230,19 @@ func SSEEnroll(url, method, session, roleID, secretID string) (*EnrollResult, er
 		log.Printf("  fingerprint: %s", hw)
 	}
 
-	// POST with Accept: text/event-stream
-	req, _ := http.NewRequest("POST", url+"/api/enroll/stream", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "text/event-stream")
-
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("connect: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-
-	// Read SSE events
-	scanner := bufio.NewScanner(resp.Body)
-	var result *EnrollResult
-	var currentEvent string
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.HasPrefix(line, "event: ") {
-			currentEvent = strings.TrimPrefix(line, "event: ")
-			continue
-		}
-
-		if strings.HasPrefix(line, "data: ") {
-			data := strings.TrimPrefix(line, "data: ")
-
-			switch currentEvent {
-			case "verify":
-				var v struct {
-					Check      string `json:"check"`
-					Passed     bool   `json:"passed"`
-					Confidence string `json:"confidence"`
-					Reason     string `json:"reason"`
-				}
-				json.Unmarshal([]byte(data), &v)
-				status := "✓"
-				if !v.Passed {
-					status = "✗"
-				}
-				log.Printf("  verify: %s %s", v.Check, status)
-
-			case "progress":
-				var p struct {
-					Step string `json:"step"`
-				}
-				json.Unmarshal([]byte(data), &p)
-				log.Printf("  %s…", p.Step)
-
-			case "decision":
-				var d struct {
-					Status string `json:"status"`
-					Reason string `json:"reason"`
-				}
-				json.Unmarshal([]byte(data), &d)
-				log.Printf("  decision: %s (%s)", d.Status, d.Reason)
-				if d.Status == "rejected" {
-					return nil, fmt.Errorf("rejected: %s", d.Reason)
-				}
-
-			case "identity":
-				result = &EnrollResult{}
-				var id struct {
-					ID       string          `json:"id"`
-					Nickname string          `json:"nickname"`
-					Status   string          `json:"status"`
-					Identity json.RawMessage `json:"identity"`
-					Config   struct {
-						Hosts  []string               `json:"hosts"`
-						Tunnel map[string]interface{} `json:"tunnel"`
-					} `json:"config"`
-				}
-				json.Unmarshal([]byte(data), &id)
-				result.ID = id.ID
-				result.Nickname = id.Nickname
-				result.Status = id.Status
-				result.Identity = id.Identity
-				result.Config.Hosts = id.Config.Hosts
-				result.Config.Tunnel = id.Config.Tunnel
-
-			case "error":
-				var e struct {
-					Reason string `json:"reason"`
-				}
-				json.Unmarshal([]byte(data), &e)
-				return nil, fmt.Errorf("server: %s", e.Reason)
+	// Call SSEEnrollStream with a logging callback
+	return SSEEnrollStream(url, method, session, roleID, secretID, "", func(evt SSEEvent) {
+		switch evt.Kind {
+		case "verify":
+			status := "✓"
+			if !evt.Passed {
+				status = "✗"
 			}
-
-			currentEvent = ""
+			log.Printf("  verify: %s %s", evt.Check, status)
+		case "progress":
+			log.Printf("  %s…", evt.Step)
+		case "decision":
+			log.Printf("  decision: %s (%s)", evt.Status, evt.Reason)
 		}
-	}
-
-	if result == nil {
-		return nil, fmt.Errorf("no identity received")
-	}
-	return result, nil
+	})
 }

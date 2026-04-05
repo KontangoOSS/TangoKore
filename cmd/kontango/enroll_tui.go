@@ -670,15 +670,15 @@ func fetchProfiles(baseURL string) tea.Cmd {
 // progress lines. Returns enrollDoneMsg with lines + result when complete.
 func runEnrollStream(url, session, roleID, secretID, profile string) tea.Cmd {
 	return func() tea.Msg {
-		method := "new"
-		if roleID != "" {
-			method = "approle"
-		} else if session != "" {
-			method = "invite"
-		}
+		// Server determines the enrollment method based on:
+		// - Machine fingerprint (known/unknown)
+		// - Credentials provided (AppRole, session, etc.)
+		// - Server policy
+		// Client just sends the data; no method flag needed.
 
 		var lines []progressLine
-		sseResult, err := enroll.SSEEnrollStream(url, method, session, roleID, secretID, profile, func(ev enroll.SSEEvent) {
+		// Pass empty string for method - server will determine it
+		sseResult, err := enroll.SSEEnrollStream(url, "", session, roleID, secretID, profile, func(ev enroll.SSEEvent) {
 			switch ev.Kind {
 			case "verify":
 				icon := "✓"

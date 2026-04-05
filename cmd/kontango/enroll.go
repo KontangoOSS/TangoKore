@@ -82,19 +82,18 @@ func runEnroll(url, session, roleID, secretID string, scanMethod bool) error {
 		return fmt.Errorf("preflight failed")
 	}
 
-	// Determine enrollment method based on available credentials and flags.
-	// Priority: scan > approle > invite > new
-	method := "new"
-	if scanMethod {
-		method = "scan"
-	} else if roleID != "" && secretID != "" {
-		method = "approle"
-	} else if session != "" {
-		method = "invite"
-	}
+	// Enrollment: Send machine data to the endpoint.
+	// The server determines the method (new/scan/trusted) based on:
+	// - Machine fingerprint (has it enrolled before?)
+	// - Credentials provided (AppRole, JWT, session token)
+	// - Server policy and decision pipeline
+	//
+	// If credentials are provided, the server will validate them.
+	// Otherwise, the machine will be processed as new or returning (fingerprint match).
 
 	log.Println("enrolling…")
-	sseResult, err := enroll.SSEEnroll(url, method, session, roleID, secretID)
+	// Always pass empty string for method - server determines it based on data
+	sseResult, err := enroll.SSEEnroll(url, "", session, roleID, secretID)
 	if err != nil {
 		return fmt.Errorf("enrollment: %w", err)
 	}
