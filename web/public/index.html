@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TangoKore Enrollment</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>TangoKore</h1>
+                <p class="tagline">You are your password. Keep being you.</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section id="enrollment-flow" class="flow-section">
+                <h2>Machine Enrollment</h2>
+                <p class="subtitle">Connect your machine to the secure mesh network</p>
+
+                <!-- Method Selection -->
+                <div id="method-selection" class="step-section">
+                    <h3>Step 1: How do you want to enroll?</h3>
+                    <div class="method-options">
+                        <label class="method-card">
+                            <input type="radio" name="method" value="new" checked>
+                            <div class="card-content">
+                                <h4>New Machine</h4>
+                                <p>First time enrolling this machine</p>
+                            </div>
+                        </label>
+
+                        <label class="method-card">
+                            <input type="radio" name="method" value="scan">
+                            <div class="card-content">
+                                <h4>Returning Machine</h4>
+                                <p>Machine was previously enrolled</p>
+                            </div>
+                        </label>
+
+                        <label class="method-card">
+                            <input type="radio" name="method" value="approle">
+                            <div class="card-content">
+                                <h4>Pre-Provisioned</h4>
+                                <p>You have credentials</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Credentials (for approle) -->
+                <div id="credentials-section" class="step-section" style="display: none;">
+                    <h3>Step 2: Enter Your Credentials</h3>
+                    <div class="form-group">
+                        <label for="role-id">Role ID</label>
+                        <input type="text" id="role-id" placeholder="Your role ID" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="secret-id">Secret ID</label>
+                        <input type="password" id="secret-id" placeholder="Your secret ID">
+                    </div>
+                </div>
+
+                <!-- Disclosure -->
+                <div id="disclosure-section" class="step-section disclosure-box">
+                    <h3>What We'll Send</h3>
+                    <div class="disclosure-content">
+                        <h4>Required (Always Sent)</h4>
+                        <ul>
+                            <li><strong>Operating System</strong> - So we know what to install</li>
+                            <li><strong>Architecture</strong> - CPU type (x86, ARM, etc.)</li>
+                            <li><strong>Machine ID</strong> - Unique identifier for this machine</li>
+                        </ul>
+
+                        <h4>Optional (Enhanced Fingerprinting)</h4>
+                        <p id="optional-items">
+                            <em>Loading optional items...</em>
+                        </p>
+
+                        <div class="privacy-note">
+                            <strong>Your Privacy Matters:</strong>
+                            <ul>
+                                <li>✓ You can review all data before sending</li>
+                                <li>✓ Data is encrypted in transit</li>
+                                <li>✓ You can run your own controller</li>
+                                <li>✓ Code is 100% open source (MIT license)</li>
+                            </ul>
+                        </div>
+
+                        <label class="checkbox-field">
+                            <input type="checkbox" id="accept-disclosure">
+                            <span>I understand what data is being sent and why</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Enrollment Button -->
+                <div class="step-section">
+                    <button id="enroll-btn" class="btn btn-primary" disabled>
+                        Start Enrollment
+                    </button>
+                </div>
+            </section>
+
+            <!-- Enrollment Progress -->
+            <section id="enrollment-progress" class="flow-section" style="display: none;">
+                <h2>Enrollment in Progress</h2>
+
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="progress-text">Initializing...</p>
+                </div>
+
+                <!-- Live Logs -->
+                <div class="logs-container">
+                    <h3>Live Logs</h3>
+                    <div class="logs" id="logs">
+                        <!-- Logs will appear here -->
+                    </div>
+                </div>
+
+                <button id="download-cmd-btn" class="btn btn-secondary" style="display: none;">
+                    📋 Copy Installation Command
+                </button>
+            </section>
+
+            <!-- Success State -->
+            <section id="enrollment-success" class="flow-section" style="display: none;">
+                <div class="success-box">
+                    <div class="success-icon">✓</div>
+                    <h2>Enrollment Successful!</h2>
+                    <p id="success-message">Your machine is now connected to the mesh network.</p>
+
+                    <div class="next-steps">
+                        <h3>What's Next?</h3>
+                        <ol>
+                            <li id="next-step-1">Download the installer for your platform</li>
+                            <li id="next-step-2">Run the installer on your machine</li>
+                            <li id="next-step-3">Verify connection and you're done!</li>
+                        </ol>
+                    </div>
+
+                    <div class="identity-info">
+                        <h3>Your Machine Identity</h3>
+                        <div class="info-box">
+                            <p><strong>Machine ID:</strong> <code id="identity-machine-id">loading...</code></p>
+                            <p><strong>Status:</strong> <code id="identity-status">loading...</code></p>
+                            <p><strong>Trust Level:</strong> <code id="identity-stage">loading...</code></p>
+                        </div>
+                    </div>
+
+                    <button id="start-over-btn" class="btn btn-secondary">
+                        Enroll Another Machine
+                    </button>
+                </div>
+            </section>
+
+            <!-- Error State -->
+            <section id="enrollment-error" class="flow-section" style="display: none;">
+                <div class="error-box">
+                    <div class="error-icon">✗</div>
+                    <h2>Enrollment Failed</h2>
+                    <p id="error-message">An error occurred during enrollment.</p>
+
+                    <details>
+                        <summary>Error Details</summary>
+                        <pre id="error-details"></pre>
+                    </details>
+
+                    <button id="retry-btn" class="btn btn-primary">Try Again</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>TangoKore is 100% open source (MIT License) • <a href="https://github.com/KontangoOSS/TangoKore">GitHub</a> • <a href="https://docs.example.com">Documentation</a></p>
+        </footer>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
