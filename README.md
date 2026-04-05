@@ -135,6 +135,68 @@ An attacker wants to impersonate `production-server-01`.
 
 Your fingerprint is not like a password. It's not like a key. It's like trying to impersonate someone by copying their entire personality, behavior, habits, and lifestyle. It's basically impossible.
 
+### No More "Forgot Your Password?" Problem
+
+**With traditional passwords:**
+- You forget your password → locked out
+- You reset your password → wait for email → create new password → remember to use it everywhere
+- You never reset it → account abandoned
+- You write it down → security risk
+- You reuse it → compromised everywhere
+
+**With Schmutz fingerprints:**
+- Your machine IS your password
+- You can never forget it—it's just hardware
+- You can never lose it—it's always with you
+- You just keep being yourself
+- You re-enroll, and the system recognizes you instantly
+
+### Share Your Profile With Trusted Friends
+
+Your machine's fingerprint can be exported and shared:
+
+```bash
+# Export your machine's identity and profile
+kontango export --identity my-machine.p12 --profile
+
+# Give this to a trusted friend or store it securely
+# They can import it on another machine or their backup
+kontango import --identity my-machine.p12 --profile
+```
+
+**Why this matters:**
+- You never lose access (backup your profile)
+- You can share access without sharing passwords (trusted friend gets your profile)
+- Your identity is portable (work from another machine, restore everything)
+- You're never locked out (your fingerprint is your master key)
+
+If you lose your laptop:
+1. Get a new machine
+2. Import your backed-up profile
+3. Re-enroll: `kontango enroll https://your-controller`
+4. System recognizes you by fingerprint
+5. You're back in, same permissions, same services
+6. No password reset. No account recovery email. No support ticket.
+
+If you want to let someone else use your machine:
+1. Export your profile
+2. They import it
+3. They enroll
+4. System recognizes both of you by fingerprint (different hardware, same profile basis)
+5. No secret sharing. No password handoff. No "change your password when they leave."
+
+### The Beauty of Never Forgetting
+
+| Situation | Traditional Password | Schmutz Fingerprint |
+|-----------|---|---|
+| **You forget the password** | Locked out. Must reset. | Just re-enroll. You're recognized. |
+| **You lose the device** | Start over with new password. Old device is abandoned. | Import your backed-up profile. You're restored. |
+| **You want to give access to a friend** | Share password (risky, they can change it). | Share profile (they can use it, you keep control). |
+| **You want to revoke access** | Change password (they change it back if they have it). | Revoke profile fingerprint (instantly blocked). |
+| **You set up a new machine** | New password for everywhere. Can't remember all of them. | Import your profile. One command. You're set. |
+| **You're traveling and need to access from borrowed laptop** | Hope you remember the password. | Import your profile temporarily. Work. Delete it. Profile stays safe at home. |
+| **Your account gets compromised** | Reset password. Hope it doesn't happen again. | Your fingerprint can't be compromised. The certificate can be. Revoke it. Re-issue. You're still you. |
+
 ---
 
 ## Quick Start
