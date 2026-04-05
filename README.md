@@ -434,9 +434,15 @@ Yes. The components are independent. You can use OpenZiti without TangoKore. You
 
 ## Privacy & Compliance
 
-**Your data, your control.**
+**Your data, your control. Zero required user input.**
 
-TangoKore collects machine fingerprints (hostname, CPU, memory, MAC addresses) to identify machines uniquely. You have complete control over where this data goes:
+TangoKore requires only **three things minimum** to work (like the Miranda Rights inform you of fundamental rights):
+
+1. **Operating System** — so we know what to install
+2. **CPU Architecture** — so we know which binary to use
+3. **Machine Identifier** — so we recognize this machine (auto-issued if you don't provide one)
+
+Everything else is optional. You have complete control over where data goes:
 
 ### Public Enrollment
 Use Kontango's public controller (`join.kontango.net`):
@@ -470,6 +476,7 @@ previous permissions. This is public hardware info only.
 Interactive users can review collected data and abort (`n` key) before confirming.
 
 ### Legal & Transparency
+- **[MIRANDA_RIGHTS.md](MIRANDA_RIGHTS.md)** — What's required (minimum) vs. optional in the SDK
 - **[ULA.md](ULA.md)** — Universal License Agreement with full data handling terms
 - **[PRIVACY.md](PRIVACY.md)** — Privacy controls and compliance checklists
 - **kontango.net/privacy** — Public privacy policy (for public enrollment)
