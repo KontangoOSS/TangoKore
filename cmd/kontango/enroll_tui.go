@@ -546,7 +546,8 @@ func (m enrollModel) viewConfirm() string {
 	b.WriteString(styleSectionTitle.Render("Confirm enrollment") + "\n\n")
 
 	// Fingerprinting disclosure
-	b.WriteString(styleDim.Render("This machine will send the following to identify itself:") + "\n\n")
+	b.WriteString(styleDim.Render("Required minimum: OS, architecture, machine ID") + "\n")
+	b.WriteString(styleDim.Render("Optional data (you've provided): see below") + "\n\n")
 
 	if m.fp != nil {
 		rows := [][]string{

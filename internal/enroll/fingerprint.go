@@ -2,6 +2,7 @@ package enroll
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
@@ -10,7 +11,20 @@ import (
 	"strings"
 )
 
+// MinimalFingerprint is the required minimum for SDK enrollment.
+// This is what gets sent automatically with zero user input.
+// Think of it as the "Miranda Rights" of TangoKore—what we need to know
+// to install and run the SDK correctly.
+type MinimalFingerprint struct {
+	OS        string `json:"os"`        // Required: to know what to install (linux/darwin/windows)
+	Arch      string `json:"arch"`      // Required: to know architecture (amd64/arm64/etc)
+	IssuedID  string `json:"issued_id"` // Required: auto-issued unique identifier if user doesn't provide one
+	Hostname  string `json:"hostname"`  // Optional but usually present
+	OSVersion string `json:"os_version"`
+}
+
 // Fingerprint holds system identifiers collected from standard OS commands.
+// This is the full/enhanced fingerprint—includes all the hardware details.
 type Fingerprint struct {
 	Hostname      string   `json:"hostname"`
 	OS            string   `json:"os"`
@@ -215,4 +229,36 @@ func DetectOSVersion() string {
 		}
 	}
 	return runtime.GOOS + "/" + runtime.GOARCH
+}
+
+// CollectMinimal gathers the minimum required fingerprint for enrollment.
+// This is what gets sent automatically—just enough to know what to install
+// and who this machine is (either by user-provided identifier or auto-issued ID).
+func CollectMinimal(userProvidedID string) (*MinimalFingerprint, error) {
+	mfp := &MinimalFingerprint{
+		OS:        runtime.GOOS,
+		Arch:      runtime.GOARCH,
+		OSVersion: DetectOSVersion(),
+	}
+	mfp.Hostname, _ = os.Hostname()
+
+	// If user provided an identifier, use it. Otherwise auto-issue one.
+	if userProvidedID != "" {
+		mfp.IssuedID = userProvidedID
+	} else {
+		mfp.IssuedID = generateMachineID()
+	}
+
+	return mfp, nil
+}
+
+// generateMachineID creates a random unique identifier for this machine.
+// Used when the user doesn't provide their own identifier.
+func generateMachineID() string {
+	b := make([]byte, 8)
+	if _, err := rand.Read(b); err != nil {
+		// Fallback if crypto/rand fails (shouldn't happen)
+		return "machine-" + strings.ToLower(DetectOSVersion()[:3])
+	}
+	return hex.EncodeToString(b)
 }
