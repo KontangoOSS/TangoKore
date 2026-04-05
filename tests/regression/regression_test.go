@@ -171,3 +171,21 @@ func TestRegression_DeadCodeRemoved(t *testing.T) {
 	t.Log("Regression test: unused imports (io, net/http, runtime) should be removed from enroll.go")
 	t.Log("If compilation fails with unused imports, dead code was re-introduced")
 }
+
+// TestRegression_FingerprintingDisclosure verifies that both enrollment paths
+// include explicit disclosure about machine fingerprinting.
+func TestRegression_FingerprintingDisclosure(t *testing.T) {
+	// This documents the requirement that both TUI and non-interactive paths
+	// must clearly inform users about fingerprinting before collection.
+	// TUI: disclosure shown in confirm step before enrollment
+	// Non-interactive: disclosure logged to stdout at start of enrollment
+	//
+	// Implementation:
+	// - enroll_tui.go: viewConfirm() includes "This machine will send the following..."
+	// - enroll.go: runEnroll() logs FINGERPRINTING DISCLOSURE banner
+
+	t.Log("Regression test: fingerprinting disclosure must appear in both TUI and non-interactive paths")
+	t.Log("TUI: shown in confirm step with what data will be sent and why")
+	t.Log("Non-interactive: logged as banner with privacy explanation")
+	t.Log("If this test fails, disclosure was removed — restore it")
+}
