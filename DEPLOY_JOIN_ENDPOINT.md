@@ -14,9 +14,12 @@ The join endpoint should:
 ## Current State
 
 - **Controllers:** 3x DigitalOcean VMs (ctrl-1, ctrl-2, ctrl-3)
-- **Service:** `tango-controller` is defined but not confirmed running
+- **Service:** `tango-controller.service` (likely running)
+- **Code:** Exists in schmutz-controller repo:
+  - `internal/controller/enroll/install.go` — Install endpoint logic
+  - `frontend/join-index.html` — Join webpage
 - **Endpoint:** Not responding to HTTP/HTTPS requests
-- **Status:** Unknown (connectivity issue or service not started)
+- **Status:** Service may be down, port may not be exposed, or Caddy routing issue
 
 ## What We Have Ready
 
@@ -31,23 +34,65 @@ The join endpoint should:
 - Embeds: BASE_URL, SESSION_TOKEN, SDK call
 - Sourced from schmutz-controller repo
 
-## Deployment Steps
+## Diagnosis & Recovery
 
 ### 1. Verify Controller Status
 ```bash
 # SSH to controller
 ssh root@142.93.75.62
 
-# Check service
+# Check if service is running
 systemctl status tango-controller
-systemctl status ziti-controller (if separate)
+systemctl status ziti-controller
 
-# Check logs
-journalctl -u tango-controller -n 50
+# Check logs for errors
+journalctl -u tango-controller -n 100
 
-# Test local endpoint
-curl -k https://localhost/install
-curl -k https://localhost/
+# Check if process is actually listening
+netstat -tlnp | grep 8080
+ss -tlnp | grep LISTEN
+```
+
+### 2. Likely Issues
+
+**Issue A: tango-controller service crashed**
+```bash
+# Restart the service
+systemctl restart tango-controller
+systemctl status tango-controller
+journalctl -u tango-controller -f  # Follow logs
+```
+
+**Issue B: Port not exposed**
+```bash
+# Check what port controller listens on
+# Likely: 8080 (internal), 443 (via Caddy)
+ps aux | grep tango-controller
+curl -k https://localhost/install  # Test locally first
+```
+
+**Issue C: Caddy routing issue**
+```bash
+# Check Caddy config
+systemctl status caddy
+journalctl -u caddy -n 50
+
+# Verify routes to tango-controller
+curl -k https://ctrl.konoss.org/ -v  # Check headers for routing
+```
+
+### 3. Restore Service
+```bash
+# If service is down
+systemctl start tango-controller
+systemctl enable tango-controller
+
+# Verify it's working
+curl -k https://localhost/install | head -3
+# Should return: #!/bin/bash
+
+# Test publicly
+curl -k https://ctrl.konoss.org/install | head -3
 ```
 
 ### 2. Configure Join Endpoint
