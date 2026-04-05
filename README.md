@@ -49,7 +49,27 @@
 
 You want to run software across machines — a home server, a cloud VM, a Raspberry Pi in a closet, a laptop at a coffee shop — and you want them all to talk to each other securely, discover services automatically, and deploy applications without touching a config file.
 
-TangoKore is the SDK that makes this happen. One command puts a machine on your encrypted mesh network. From there, the controller takes over — pushing configurations, injecting secrets, starting containers, routing traffic. Every machine is authenticated by identity, not by IP address. Every connection is end-to-end encrypted. Every port is closed to the outside world.
+TangoKore is the SDK that makes this happen. **One command puts a machine on your encrypted mesh network. No passwords. No keys to manage. No secrets to rotate.**
+
+### The Core Idea: You Are Your Password
+
+Traditional authentication is broken:
+- Passwords can be guessed, forgotten, stolen, reused
+- Keys need to be rotated, distributed, protected
+- Every compromise requires a password reset
+- Complexity = burden on the user
+
+**Schmutz (the philosophy behind TangoKore) replaces passwords with something impossible to replicate: your machine itself.**
+
+Your machine's fingerprint — its hardware, OS, behavior, the services it runs, how it connects — is unique. It's not something someone can guess or steal without physically taking your machine. And it's not something you can forget because it's just who you are.
+
+**Here's the magic:** As your machine enrolls, keeps being itself, and shows consistent behavior over time, trust grows automatically. The server learns you. Recognizes you. Trusts you more with each enrollment. Your fingerprint IS your persistent identity.
+
+You don't memorize a password. You don't rotate credentials. You don't get locked out. You just keep being you — and we never forget who you are.
+
+### What TangoKore Does
+
+From there, the controller takes over — pushing configurations, injecting secrets, starting containers, routing traffic. Every machine is authenticated by its identity (fingerprint), not by IP address. Every connection is end-to-end encrypted. Every port is closed to the outside world.
 
 It's built on [OpenZiti](https://openziti.io) for the overlay network, [OpenBao](https://openbao.org) for secrets, and [Schmutz](https://github.com/KontangoOSS/schmutz) for edge security. TangoKore ties them together into something you can use with one command.
 
@@ -59,9 +79,63 @@ It's built on [OpenZiti](https://openziti.io) for the overlay network, [OpenBao]
 > TangoKore orchestrates machines across the internet.
 >
 > Except there's no cluster. No VPN. No firewall rules.
-> Just a mesh — and every machine on it is invisible to everyone else.
+> No passwords. No key rotation. No secrets to steal.
+>
+> Just a mesh — and every machine on it is authenticated by being itself.
 
 <br />
+
+## Why This Works: Why Your Fingerprint Is Stronger Than Any Password
+
+### Passwords Are Easy to Break
+
+| Problem | Impact |
+|---------|--------|
+| Can be guessed | Brute force becomes feasible with enough attempts |
+| Can be stolen | Leaked password databases expose millions |
+| Can be forgotten | Users write them down, reuse them, lose them |
+| Can be phished | Social engineering extracts passwords |
+| Must be rotated | Complex passwords are hard to remember → users choose weak ones |
+| Can be shared | No way to know if someone else has it |
+
+### Your Fingerprint Is Impossible to Replicate
+
+| Property | Why It's Strong |
+|----------|---|
+| **Hardware-Bound** | To use someone else's fingerprint, you need their exact hardware (CPU, motherboard, serial numbers, MACs). You can't just steal a file. You'd have to physically steal the machine. |
+| **Behavioral** | Your fingerprint includes how you enroll, when you enroll, what services you run, how your network behaves. Copying everything you do, every action you take, the pattern of your interactions—it's basically impossible. |
+| **Stateful Over Time** | Each enrollment adds more data points. After 10 enrollments, we've seen your patterns, your consistency. A fake machine would have to match every single behavioral pattern. |
+| **Can't Be Guessed** | Billions of possible hardware combinations. You can't brute force your way through them. |
+| **Can't Be Shared** | You can't hand someone a copy of your fingerprint. It's not a file. It's your hardware. |
+| **Can't Be Rotated Away** | Even if someone compromises a certificate, your fingerprint is still there. It's not a secret to rotate. It's just how you are. |
+| **Increases in Value** | The longer a machine exists and behaves consistently, the more valuable that trust relationship becomes. A hacker would need to perfectly mimic months of behavior to fool the system. |
+
+### Example: Why Replication Fails
+
+An attacker wants to impersonate `production-server-01`.
+
+**Attacker's challenge:**
+1. Steal the Ziti certificate (hard, but possible)
+2. Set up identical hardware (motherboard serial, CPU, MAC addresses)
+3. Match the OS and kernel version
+4. Enroll at the same times of day
+5. Connect to the same services
+6. Show the same network behavior
+7. Keep doing this for months without deviation
+8. All while the real server is still enrolling normally
+
+**The real server just keeps being itself.** The server sees two sources claiming the same fingerprint with completely different behavior patterns. Trust doesn't transfer. Behavior mismatch = rejected.
+
+### The Math of Replication
+
+- Hardware combinations: billions
+- Behavioral patterns over time: near-infinite
+- Consistency required to fool the system: months or years of perfect mimicry
+- Likelihood an attacker can replicate all of this: essentially zero
+
+Your fingerprint is not like a password. It's not like a key. It's like trying to impersonate someone by copying their entire personality, behavior, habits, and lifestyle. It's basically impossible.
+
+---
 
 ## Quick Start
 
