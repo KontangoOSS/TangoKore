@@ -88,13 +88,13 @@ func createPKIRoles(cfg *Config) error {
 			"country":           []string{"US"},
 			"description":       "Base device identity (1 year, external resolvable)",
 		},
-		"device-quarantine": map[string]interface{}{
-			"allowed_domains":   []string{"quarantine." + cfg.Domain},
+		"device-web": map[string]interface{}{
+			"allowed_domains":   []string{"web." + cfg.Domain},
 			"allow_subdomains":  true,
 			"max_ttl":           "24h",
 			"organization":      []string{"Kontango"},
 			"country":           []string{"US"},
-			"description":       "Quarantine devices (24h, internal Ziti DNS)",
+			"description":       "Web testing (24h, quarantine devices, internal Ziti DNS)",
 		},
 		"device-temp": map[string]interface{}{
 			"allowed_domains":   []string{"temp." + cfg.Domain},
