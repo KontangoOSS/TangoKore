@@ -72,11 +72,7 @@ func generateSchmutzEnv(cfg *Config) string {
 	b.WriteString("\n")
 
 	b.WriteString("# --- Public API ---\n")
-	domain := cfg.Domain
-	if cfg.TestMode {
-		domain = "kontango.local"
-	}
-	b.WriteString(fmt.Sprintf("PUBLIC_ZT_API=https://%s.%s:443/edge/client/v1\n", cfg.Name, domain))
+	b.WriteString(fmt.Sprintf("PUBLIC_ZT_API=https://%s.%s:443/edge/client/v1\n", cfg.Name, cfg.Domain))
 	b.WriteString("\n")
 
 	b.WriteString("# --- Join Endpoint ---\n")
@@ -88,7 +84,7 @@ func generateSchmutzEnv(cfg *Config) string {
 	b.WriteString("\n")
 
 	b.WriteString("# --- Downloads ---\n")
-	b.WriteString("GITHUB_RELEASE=https://ctrl.example.com/download\n")
+	b.WriteString(fmt.Sprintf("GITHUB_RELEASE=https://%s/download\n", cfg.JoinDomain))
 	b.WriteString("GITHUB_RAW=https://raw.githubusercontent.com/KontangoOSS/schmutz/main\n")
 	b.WriteString("\n")
 
