@@ -104,6 +104,14 @@ func createPKIRoles(cfg *Config) error {
 			"country":           []string{"US"},
 			"description":       "Staging devices (7d, internal Ziti DNS)",
 		},
+		"device-lab": map[string]interface{}{
+			"allowed_domains":   []string{"lab." + cfg.Domain},
+			"allow_subdomains":  true,
+			"max_ttl":           "8760h",
+			"organization":      []string{"Kontango"},
+			"country":           []string{"US"},
+			"description":       "Public internal services (1yr, resolvable via Ziti DNS)",
+		},
 		"device-tango": map[string]interface{}{
 			"allowed_domains":   []string{"tango"}, // NO domain suffix - unresolvable
 			"allow_subdomains":  true,
