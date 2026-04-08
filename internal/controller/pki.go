@@ -190,23 +190,13 @@ func createServerCert(cfg *Config, caCertPEM []byte, caKey *rsa.PrivateKey) ([]b
 		},
 	}
 
-	// Add stage domains if not test mode
-	if !cfg.TestMode {
-		template.DNSNames = append(template.DNSNames,
-			"*.quarantine."+cfg.Domain,
-			"*.members."+cfg.Domain,
-			"*.lab."+cfg.Domain,
-			"*.admin."+cfg.Domain,
-		)
-	} else {
-		// Test mode: use local domains
-		template.DNSNames = append(template.DNSNames,
-			"*.quarantine.kontango.local",
-			"*.members.kontango.local",
-			"*.lab.kontango.local",
-			"*.admin.kontango.local",
-		)
-	}
+	// Add stage domains - always use the configured domain
+	template.DNSNames = append(template.DNSNames,
+		"*.quarantine."+cfg.Domain,
+		"*.members."+cfg.Domain,
+		"*.lab."+cfg.Domain,
+		"*.admin."+cfg.Domain,
+	)
 
 	// Add IP address
 	template.IPAddresses = append(template.IPAddresses, net.ParseIP("127.0.0.1"))

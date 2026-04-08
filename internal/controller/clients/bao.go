@@ -293,3 +293,74 @@ func (c *BaoClient) IssueCert(roleName, commonName string, ttl string) (cert, ke
 
 	return cert, key, nil
 }
+
+// EnableCertAuth enables certificate-based authentication
+func (c *BaoClient) EnableCertAuth(path string) error {
+	return c.EnableAuth(path, "cert")
+}
+
+// CreateCertRole creates a certificate auth role that maps cert CN patterns to identities
+// For example: role "lab-devices" could match CN pattern "*.lab.konoss.org" -> identity "lab-stage"
+func (c *BaoClient) CreateCertRole(name string, certCNPattern string, identityName string, policies []string) error {
+	body := map[string]interface{}{
+		"certificate": certCNPattern,
+		"display_name": name,
+		"ttl": "24h",
+		"max_ttl": "24h",
+		"policies": policies,
+		// These fields would map the cert to an entity/identity
+		"bind_cidrs": []string{}, // allow all
+		"ocsp_fail_open": true,   // allow offline OCSP
+	}
+
+	_, err := c.request("POST", fmt.Sprintf("auth/cert/certs/%s", name), body)
+	return err
+}
+
+// CreateEntityAlias creates an alias linking a certificate CN to a Bao entity (identity)
+// This allows certificate groups (e.g., all *.lab.{domain} certs) to authenticate as a single entity
+func (c *BaoClient) CreateEntityAlias(authPath string, cnPattern string, entityID string) (string, error) {
+	body := map[string]interface{}{
+		"name":           cnPattern,
+		"canonical_id":   entityID,
+		"mount_accessor": authPath, // Will need to lookup mount accessor
+	}
+
+	resp, err := c.request("POST", "identity/entity-alias", body)
+	if err != nil {
+		return "", err
+	}
+
+	data := resp["data"].(map[string]interface{})
+	return data["id"].(string), nil
+}
+
+// CreateEntity creates a named entity (identity) in Bao
+// This represents a group of devices at the same stage
+func (c *BaoClient) CreateEntity(name string, policies []string, metadata map[string]string) (string, error) {
+	body := map[string]interface{}{
+		"name":     name,
+		"policies": policies,
+		"metadata": metadata,
+	}
+
+	resp, err := c.request("POST", "identity/entity", body)
+	if err != nil {
+		return "", err
+	}
+
+	data := resp["data"].(map[string]interface{})
+	return data["id"].(string), nil
+}
+
+// GetMountAccessor retrieves the accessor for a mounted auth method
+func (c *BaoClient) GetMountAccessor(authPath string) (string, error) {
+	resp, err := c.request("GET", fmt.Sprintf("sys/auth/%s", authPath), nil)
+	if err != nil {
+		return "", err
+	}
+
+	data := resp["data"].(map[string]interface{})
+	accessor := data["accessor"].(string)
+	return accessor, nil
+}

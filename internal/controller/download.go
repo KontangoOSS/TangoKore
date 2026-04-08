@@ -54,6 +54,12 @@ func stepDownload(cfg *Config) error {
 				path: filepath.Join(cfg.BinDir, "bao"),
 				url:  fmt.Sprintf("https://releases.hashicorp.com/openbao/%s/openbao_%s_linux_amd64.zip", cfg.BaoVersion, cfg.BaoVersion),
 			},
+		)
+	}
+
+	// Schmutz can come from JoinDomain
+	if !cfg.TestMode {
+		binaries = append(binaries,
 			struct {
 				name       string
 				path       string
@@ -63,7 +69,7 @@ func stepDownload(cfg *Config) error {
 			}{
 				name: "schmutz-controller",
 				path: filepath.Join(cfg.BinDir, "schmutz-controller"),
-				url:  "https://git.konoss.org/kore/schmutz-controller/releases/latest/download/schmutz-controller-linux-amd64",
+				url:  fmt.Sprintf("https://%s/download/schmutz-controller-linux-amd64", cfg.JoinDomain),
 			},
 		)
 	}
