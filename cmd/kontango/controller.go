@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/KontangoOSS/TangoKore/internal/controller"
 )
 
 func cmdController(args []string) {
@@ -16,6 +18,8 @@ func cmdController(args []string) {
 
 	subcommand := args[0]
 	switch subcommand {
+	case "install":
+		cmdControllerInstall(args[1:])
 	case "create":
 		cmdControllerCreate(args[1:])
 	case "status":
@@ -23,6 +27,93 @@ func cmdController(args []string) {
 	default:
 		fmt.Fprintf(os.Stderr, "unknown controller subcommand: %s\n", subcommand)
 		printControllerUsage()
+		os.Exit(1)
+	}
+}
+
+func cmdControllerInstall(args []string) {
+	fs := flag.NewFlagSet("controller install", flag.ExitOnError)
+
+	// Core
+	name := fs.String("name", "ctrl-1", "node name")
+	zitiPass := fs.String("ziti-pass", "", "Ziti admin password (required)")
+	domain := fs.String("domain", "", "base domain (required in production)")
+
+	// Test mode
+	testMode := fs.Bool("test", false, "self-signed certs, no DNS required")
+
+	// Join mode
+	joinLeader := fs.String("join", "", "SSH to leader for join mode")
+	joinUnsealKey := fs.String("join-bao-unseal", "", "Bao unseal key from leader")
+
+	// TLS
+	cfToken := fs.String("cf-token", "", "Cloudflare API token")
+	acmeEmail := fs.String("acme-email", "", "ACME certificate email")
+
+	// Versions
+	zitiVer := fs.String("ziti-version", "1.6.15", "Ziti version")
+	baoVer := fs.String("bao-version", "2.5.2", "OpenBao version")
+
+	// Paths
+	home := fs.String("home", "/opt/kontango", "install root directory")
+	etcDir := fs.String("etc", "/etc/kontango", "config directory")
+
+	// Other
+	overlayDomain := fs.String("overlay", "tango", "overlay DNS domain")
+
+	fs.Parse(args)
+
+	log.SetFlags(0)
+
+	// Validate required fields
+	if *zitiPass == "" {
+		fmt.Fprintf(os.Stderr, "error: --ziti-pass is required\n")
+		os.Exit(1)
+	}
+
+	if !*testMode && *domain == "" {
+		fmt.Fprintf(os.Stderr, "error: --domain is required in production mode\n")
+		os.Exit(1)
+	}
+
+	if !*testMode && *cfToken == "" {
+		fmt.Fprintf(os.Stderr, "error: --cf-token is required in production mode\n")
+		os.Exit(1)
+	}
+
+	if !*testMode && *acmeEmail == "" {
+		fmt.Fprintf(os.Stderr, "error: --acme-email is required in production mode\n")
+		os.Exit(1)
+	}
+
+	// Set default domain in test mode
+	if *testMode && *domain == "" {
+		*domain = "kontango.local"
+	}
+
+	// Create config
+	cfg := &controller.Config{
+		Name:           *name,
+		Domain:         *domain,
+		JoinDomain:     "join." + *domain,
+		OverlayDomain:  *overlayDomain,
+		ZitiAdminUser:  "admin",
+		ZitiAdminPass:  *zitiPass,
+		CloudflareToken: *cfToken,
+		ACMEEmail:      *acmeEmail,
+		TestMode:       *testMode,
+		ZitiVersion:    *zitiVer,
+		BaoVersion:     *baoVer,
+		Home:           *home,
+		EtcDir:         *etcDir,
+		JoinMode:       *joinLeader != "",
+		JoinLeader:     *joinLeader,
+		JoinBaoUnsealKey: *joinUnsealKey,
+	}
+
+	// Run installation
+	if err := controller.Install(cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "installation failed: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -82,8 +173,24 @@ func printControllerUsage() {
 	fmt.Fprintf(os.Stderr, `usage: kontango controller <subcommand> [flags]
 
 subcommands:
-  create [flags]  deploy a new HA controller cluster
-  status [flags]  show controller status
+  install [flags]  bootstrap a new controller node
+  create [flags]   deploy a new HA controller cluster
+  status [flags]   show controller status
+
+flags for 'install':
+  --name <name>              node name (default: ctrl-1)
+  --ziti-pass <pass>         Ziti admin password (required)
+  --domain <domain>          base domain (required in production)
+  --test                     self-signed certs, no DNS required
+  --join <leader>            SSH to leader for join mode
+  --join-bao-unseal <key>    Bao unseal key from leader
+  --cf-token <token>         Cloudflare API token (production only)
+  --acme-email <email>       ACME certificate email (production only)
+  --ziti-version <ver>       Ziti version (default: 1.6.15)
+  --bao-version <ver>        OpenBao version (default: 2.5.2)
+  --home <dir>               install root (default: /opt/kontango)
+  --etc <dir>                config directory (default: /etc/kontango)
+  --overlay <domain>         overlay domain (default: tango)
 
 flags for 'create':
   --name <name>       cluster name (required)
@@ -93,6 +200,9 @@ flags for 'status':
   --json              output as JSON
 
 examples:
+  kontango controller install --test --name ctrl-test --ziti-pass TestPass123
+  kontango controller install --name ctrl-1 --domain konoss.org \
+    --ziti-pass <pass> --cf-token <tok> --acme-email ops@konoss.org
   kontango controller create --name prod --domain example.com
   kontango controller status --json
 `)
