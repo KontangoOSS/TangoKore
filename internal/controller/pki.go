@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -64,6 +65,71 @@ func stepPKI(cfg *Config) error {
 		return fmt.Errorf("write ca-bundle: %w", err)
 	}
 	log.Println("  ✓ CA bundle created")
+
+	// Create PKI role definition files (for Bao or Ziti)
+	if err := createPKIRoles(cfg); err != nil {
+		return fmt.Errorf("create PKI roles: %w", err)
+	}
+	log.Println("  ✓ PKI roles defined")
+
+	return nil
+}
+
+// createPKIRoles generates PKI role definitions for layer-based certificates
+func createPKIRoles(cfg *Config) error {
+	rolesFile := filepath.Join(cfg.PKIDir, "roles.json")
+
+	roles := map[string]interface{}{
+		"device-base": map[string]interface{}{
+			"allowed_domains":   []string{cfg.Domain},
+			"allow_subdomains":  true,
+			"max_ttl":           "8760h",
+			"organization":      []string{"Kontango"},
+			"country":           []string{"US"},
+			"description":       "Base device identity (1 year, external resolvable)",
+		},
+		"device-quarantine": map[string]interface{}{
+			"allowed_domains":   []string{"quarantine." + cfg.Domain},
+			"allow_subdomains":  true,
+			"max_ttl":           "24h",
+			"organization":      []string{"Kontango"},
+			"country":           []string{"US"},
+			"description":       "Quarantine devices (24h, internal Ziti DNS)",
+		},
+		"device-temp": map[string]interface{}{
+			"allowed_domains":   []string{"temp." + cfg.Domain},
+			"allow_subdomains":  true,
+			"max_ttl":           "168h", // 7 days
+			"organization":      []string{"Kontango"},
+			"country":           []string{"US"},
+			"description":       "Staging devices (7d, internal Ziti DNS)",
+		},
+		"device-tango": map[string]interface{}{
+			"allowed_domains":   []string{"tango"}, // NO domain suffix - unresolvable
+			"allow_subdomains":  true,
+			"max_ttl":           "8760h",
+			"organization":      []string{"Kontango"},
+			"country":           []string{"US"},
+			"description":       "Production devices (1yr, unresolvable, Ziti DNS only)",
+		},
+		"device-admin": map[string]interface{}{
+			"allowed_domains":   []string{"admin"}, // NO domain suffix - unresolvable
+			"allow_subdomains":  true,
+			"max_ttl":           "8760h",
+			"organization":      []string{"Kontango"},
+			"country":           []string{"US"},
+			"description":       "Admin devices (1yr, unresolvable, Ziti DNS only)",
+		},
+	}
+
+	rolesJSON, err := json.Marshal(roles)
+	if err != nil {
+		return fmt.Errorf("marshal roles: %w", err)
+	}
+
+	if err := os.WriteFile(rolesFile, rolesJSON, 0644); err != nil {
+		return fmt.Errorf("write roles file: %w", err)
+	}
 
 	return nil
 }
