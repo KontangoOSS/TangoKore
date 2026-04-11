@@ -60,9 +60,29 @@ func stepBaoInit(cfg *Config) error {
 	// 6. Write init state to disk (temp, will be moved to KV in step 6)
 	log.Println("  → saving init credentials...")
 	initPath := filepath.Join(cfg.EtcDir, "bao-init.json")
-	initJSON := fmt.Sprintf(`{"unseal_key":"%s","root_token":"%s"}`, unsealKey, rootToken)
-	if err := os.WriteFile(initPath, []byte(initJSON), 0600); err != nil {
-		return fmt.Errorf("write init: %w", err)
+
+	// If already initialized (no unseal key returned), retrieve init from existing file or fail
+	if unsealKey == "" {
+		// For fresh bootstrap, if Bao claims to be initialized but we have no creds,
+		// we need to either recover from backup or reset Bao
+		existingInit, _ := os.ReadFile(initPath)
+		if existingInit != nil && len(existingInit) > 0 {
+			// Use existing init file
+			log.Println("  ⚠ using existing Bao init credentials")
+		} else {
+			// Bao is initialized but we have no credentials — this is a problem
+			// In this case, the operator needs to either:
+			// 1. Provide the unseal key and root token manually
+			// 2. Recover from backup
+			// 3. Wipe Bao and restart
+			return fmt.Errorf("Bao is initialized but no credentials found. Reset with: sudo systemctl stop kontango-bao && sudo rm -rf /var/lib/openbao && sudo rm -f %s", initPath)
+		}
+	} else {
+		// Fresh init — save credentials
+		initJSON := fmt.Sprintf(`{"unseal_key":"%s","root_token":"%s"}`, unsealKey, rootToken)
+		if err := os.WriteFile(initPath, []byte(initJSON), 0600); err != nil {
+			return fmt.Errorf("write init: %w", err)
+		}
 	}
 
 	log.Println("  ✓ OpenBao initialized and ready")
@@ -190,10 +210,17 @@ func initOrJoinBao(cfg *Config) (*clients.BaoClient, string, string, error) {
 	if !cfg.JoinMode {
 		// Init mode: initialize a new Bao cluster
 		// Check if already initialized
-		initialized, _, err := client.SealStatus()
-		if err == nil && initialized {
-			log.Println("  ⚠ Bao already initialized — skipping init")
+		_, sealed, err := client.SealStatus()
+		if err == nil && !sealed {
+			// Already initialized and unsealed
+			log.Println("  ⚠ Bao already initialized and unsealed — skipping init")
 			return client, "", "", nil
+		}
+
+		if sealed {
+			// Bao is initialized but sealed — need unseal key to proceed
+			log.Println("  ⚠ Bao already initialized but sealed — requires unseal key")
+			return client, "", "", fmt.Errorf("Bao is sealed. Provide unseal key or reset with: sudo systemctl stop kontango-bao && sudo rm -rf /var/lib/openbao")
 		}
 
 		// Initialize with 1 key, threshold 1 (unsealed immediately for single-node setup)

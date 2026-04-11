@@ -170,7 +170,7 @@ func configureFirewall(cfg *Config) error {
 		for _, ip := range clusterIPs {
 			if err := ufwAllow(
 				fmt.Sprintf("%s from %s", cp.ports, ip),
-				"from", ip, "to", "any", "port", cp.ports, "proto", "tcp", "comment", cp.name,
+				"from", ip, "to", "any", "port", strings.TrimSuffix(cp.ports, "/tcp"), "proto", "tcp", "comment", cp.name,
 			); err != nil {
 				return err
 			}
