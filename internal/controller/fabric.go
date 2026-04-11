@@ -1,26 +1,104 @@
 package controller
 
 import (
+	"fmt"
 	"log"
+
+	"github.com/KontangoOSS/TangoKore/internal/controller/clients"
 )
 
-// stepFabric creates fabric services in Ziti
+// stepFabric creates Ziti services and policies
 func stepFabric(cfg *Config) error {
-	log.Println("bootstrapping fabric services...")
+	log.Println("step 11/13: configuring Ziti fabric services and policies...")
 
-	// TODO: Implement fabric services creation
-	// - Create services:
-	//   - ziti-controller (control plane)
-	//   - bao-api (secrets access)
-	//   - bao-raft (cluster replication)
-	//   - schmutz (enrollment service)
-	//   - sdk-downloads (public SDK distribution)
-	//   - installer-downloads (public installer distribution)
-	// - Create intercept configs
-	// - Create host configs
-	// - Assign to policies
+	// Skip on edge routers — only controllers create services
+	if cfg.JoinMode {
+		log.Println("  ⚠ skipping fabric (edge router)")
+		return nil
+	}
 
-	log.Println("  ✓ fabric services created")
+	// Create Ziti client
+	zitiClient, err := clients.NewZitiClient(
+		fmt.Sprintf("https://127.0.0.1:%d/edge/management/v1", cfg.ZitiCtrlPort),
+		cfg.ZitiAdminUser,
+		cfg.ZitiAdminPass,
+	)
+	if err != nil {
+		return fmt.Errorf("create ziti client: %w", err)
+	}
 
+	// 1. Create services
+	log.Println("  → creating services...")
+	services := []string{
+		"enrollment",      // Enrollment API
+		"controller-api",  // Controller management API
+		"bao-api",         // Bao vault API
+		"nats-hub",        // NATS messaging hub
+	}
+
+	for _, svcName := range services {
+		svcID, err := zitiClient.CreateService(svcName, nil, []string{svcName})
+		if err != nil {
+			return fmt.Errorf("create service %s: %w", svcName, err)
+		}
+		log.Printf("    ✓ %s (ID: %s)", svcName, svcID)
+	}
+
+	// 2. Create Service Edge Router Policy: all-routers (all services can use all routers)
+	log.Println("  → creating service edge router policy...")
+	if err := zitiClient.CreateServiceEdgeRouterPolicy("all-routers", nil, nil); err != nil {
+		return fmt.Errorf("create serp: %w", err)
+	}
+	log.Println("    ✓ all-routers (services can use all routers)")
+
+	// 3. Create Service Policies
+	log.Println("  → creating service policies...")
+
+	// Schmutz can bind enrollment service
+	if err := zitiClient.CreateServicePolicy(
+		"schmutz-binds-enrollment",
+		"Bind",
+		[]string{"#schmutz"},           // schmutz identity role
+		[]string{"#enrollment"},        // enrollment service role
+	); err != nil {
+		return fmt.Errorf("create schmutz-binds-enrollment: %w", err)
+	}
+	log.Println("    ✓ schmutz-binds-enrollment")
+
+	// Schmutz can bind Bao API
+	if err := zitiClient.CreateServicePolicy(
+		"schmutz-binds-bao",
+		"Bind",
+		[]string{"#schmutz"},
+		[]string{"#bao-api"},
+	); err != nil {
+		return fmt.Errorf("create schmutz-binds-bao: %w", err)
+	}
+	log.Println("    ✓ schmutz-binds-bao")
+
+	// Schmutz can bind controller API
+	if err := zitiClient.CreateServicePolicy(
+		"schmutz-binds-controller",
+		"Bind",
+		[]string{"#schmutz"},
+		[]string{"#controller-api"},
+	); err != nil {
+		return fmt.Errorf("create schmutz-binds-controller: %w", err)
+	}
+	log.Println("    ✓ schmutz-binds-controller")
+
+	// 4. Create Dial Policies: devices can dial enrollment
+	log.Println("  → creating dial policies...")
+	if err := zitiClient.CreateServicePolicy(
+		"devices-dial-enrollment",
+		"Dial",
+		[]string{"#device-base"},       // device identities
+		[]string{"#enrollment"},        // enrollment service
+	); err != nil {
+		return fmt.Errorf("create devices-dial-enrollment: %w", err)
+	}
+	log.Println("    ✓ devices-dial-enrollment")
+
+	log.Println("  ✓ fabric configured")
 	return nil
 }
