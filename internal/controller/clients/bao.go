@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -452,6 +453,10 @@ func (c *BaoClient) PKIMount(mountPath string) error {
 		"type": "pki",
 	}
 	_, err := c.request("POST", fmt.Sprintf("sys/mounts/%s", mountPath), body)
+	// If mount already exists, that's OK
+	if err != nil && strings.Contains(err.Error(), "already in use") {
+		return nil
+	}
 	return err
 }
 
@@ -554,7 +559,8 @@ func (c *BaoClient) PKIIssueCert(mountPath, roleName, commonName, ttl string, al
 		"ttl": ttl,
 	}
 	if len(altNames) > 0 {
-		body["alt_names"] = altNames
+		// Bao expects alt_names as a comma-separated string, not an array
+		body["alt_names"] = strings.Join(altNames, ",")
 	}
 	resp, err := c.request("POST", fmt.Sprintf("%s/issue/%s", mountPath, roleName), body)
 	if err != nil {

@@ -104,8 +104,8 @@ api_addr     = "https://{{.NodeName}}.{{.Domain}}:8200"
 
 listener "tcp" {
   address         = "127.0.0.1:8200"
-  tls_cert_file   = "/etc/kontango/pki/server.crt"
-  tls_key_file    = "/etc/kontango/pki/server.key"
+  tls_cert_file   = "{{.PKIDir}}/server.crt"
+  tls_key_file    = "{{.PKIDir}}/server.key"
   cluster_address = "0.0.0.0:8201"
 }
 `
@@ -119,6 +119,7 @@ listener "tcp" {
 		"DataDir":   filepath.Join(cfg.Home, "data", "bao"),
 		"NodeName":  cfg.Name,
 		"Domain":    cfg.Domain,
+		"PKIDir":    cfg.PKIDir,
 	}
 
 	outPath := filepath.Join(cfg.EtcDir, "openbao.hcl")
@@ -210,20 +211,21 @@ func initOrJoinBao(cfg *Config) (*clients.BaoClient, string, string, error) {
 	if !cfg.JoinMode {
 		// Init mode: initialize a new Bao cluster
 		// Check if already initialized
-		_, sealed, err := client.SealStatus()
-		if err == nil && !sealed {
-			// Already initialized and unsealed
-			log.Println("  ⚠ Bao already initialized and unsealed — skipping init")
-			return client, "", "", nil
+		initialized, sealed, err := client.SealStatus()
+		if err == nil && initialized {
+			// Already initialized
+			if !sealed {
+				// Already initialized and unsealed — skip init
+				log.Println("  ⚠ Bao already initialized and unsealed — skipping init")
+				return client, "", "", nil
+			} else {
+				// Already initialized but sealed — need unseal key to proceed
+				log.Println("  ⚠ Bao already initialized but sealed — requires unseal key")
+				return client, "", "", fmt.Errorf("Bao is sealed. Provide unseal key or reset with: sudo systemctl stop kontango-bao && sudo rm -rf /var/lib/openbao")
+			}
 		}
 
-		if sealed {
-			// Bao is initialized but sealed — need unseal key to proceed
-			log.Println("  ⚠ Bao already initialized but sealed — requires unseal key")
-			return client, "", "", fmt.Errorf("Bao is sealed. Provide unseal key or reset with: sudo systemctl stop kontango-bao && sudo rm -rf /var/lib/openbao")
-		}
-
-		// Initialize with 1 key, threshold 1 (unsealed immediately for single-node setup)
+		// Not initialized — initialize with 1 key, threshold 1 (unsealed immediately for single-node setup)
 		unsealKey, rootToken, err := client.Init(1, 1)
 		if err != nil {
 			return nil, "", "", fmt.Errorf("init: %w", err)

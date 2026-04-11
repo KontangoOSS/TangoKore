@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"strings"
 )
 
@@ -63,6 +64,15 @@ func stepPreflight(cfg *Config) error {
 	// Configure firewall
 	if err := configureFirewall(cfg); err != nil {
 		return fmt.Errorf("firewall: %w", err)
+	}
+
+	// For test mode, generate self-signed certs now so Bao can start with TLS
+	if cfg.TestMode {
+		log.Println("  → generating test-mode PKI certs...")
+		if err := generateTestPKI(cfg); err != nil {
+			return fmt.Errorf("generate test PKI: %w", err)
+		}
+		log.Println("  ✓ test PKI certs generated")
 	}
 
 	return nil
@@ -240,4 +250,108 @@ func detectPublicIPFromInterfaces() (string, error) {
 	}
 
 	return "", fmt.Errorf("no suitable IP address found")
+}
+
+// generateTestPKI creates self-signed root CA and server cert for test mode
+// This allows Bao to start with TLS before the full PKI is generated in step 5
+func generateTestPKI(cfg *Config) error {
+	// Create PKI directory
+	if err := os.MkdirAll(cfg.PKIDir, 0755); err != nil {
+		return fmt.Errorf("mkdir pki: %w", err)
+	}
+
+	// Generate self-signed root CA
+	rootKey := filepath.Join(cfg.PKIDir, "root-ca.key")
+	rootCert := filepath.Join(cfg.PKIDir, "root-ca.crt")
+
+	// openssl genrsa -out root-ca.key 2048
+	cmd := exec.Command("openssl", "genrsa", "-out", rootKey, "2048")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("genrsa root: %s", string(out))
+	}
+
+	// openssl req -x509 -new -nodes -key root-ca.key -days 3650 -out root-ca.crt -subj "/CN=test-ca"
+	cmd = exec.Command("openssl", "req", "-x509", "-new", "-nodes",
+		"-key", rootKey, "-days", "3650", "-out", rootCert,
+		"-subj", "/CN=test-ca")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("req root: %s", string(out))
+	}
+
+	// Generate server key
+	serverKey := filepath.Join(cfg.PKIDir, "server.key")
+	cmd = exec.Command("openssl", "genrsa", "-out", serverKey, "2048")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("genrsa server: %s", string(out))
+	}
+
+	// Create CSR config with SAN for localhost
+	csrConf := filepath.Join(cfg.PKIDir, "server.conf")
+	csrConfContent := fmt.Sprintf(`[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = localhost
+
+[v3_req]
+subjectAltName = DNS:localhost,DNS:127.0.0.1,DNS:%s
+`, cfg.Name+"."+cfg.Domain)
+
+	if err := os.WriteFile(csrConf, []byte(csrConfContent), 0600); err != nil {
+		return fmt.Errorf("write csr conf: %w", err)
+	}
+
+	// Generate server CSR
+	serverCsr := filepath.Join(cfg.PKIDir, "server.csr")
+	cmd = exec.Command("openssl", "req", "-new", "-key", serverKey,
+		"-out", serverCsr, "-config", csrConf)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("req server: %s", string(out))
+	}
+
+	// Sign server cert with root CA
+	serverCert := filepath.Join(cfg.PKIDir, "server.crt")
+	cmd = exec.Command("openssl", "x509", "-req", "-in", serverCsr,
+		"-CA", rootCert, "-CAkey", rootKey, "-CAcreateserial",
+		"-out", serverCert, "-days", "365",
+		"-extensions", "v3_req", "-extfile", csrConf)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("x509 sign: %s", string(out))
+	}
+
+	// Create ca-bundle.pem (root cert for clients)
+	bundlePath := filepath.Join(cfg.PKIDir, "ca-bundle.pem")
+	bundleData, err := os.ReadFile(rootCert)
+	if err != nil {
+		return fmt.Errorf("read root cert: %w", err)
+	}
+	if err := os.WriteFile(bundlePath, bundleData, 0644); err != nil {
+		return fmt.Errorf("write bundle: %w", err)
+	}
+
+	// Create signing-chain.crt (for Ziti, same as root in test mode)
+	chainPath := filepath.Join(cfg.PKIDir, "signing-chain.crt")
+	if err := os.WriteFile(chainPath, bundleData, 0644); err != nil {
+		return fmt.Errorf("write chain: %w", err)
+	}
+
+	// Create intermediate.crt and intermediate.key (same as root for test mode)
+	intCertPath := filepath.Join(cfg.PKIDir, "intermediate.crt")
+	intKeyPath := filepath.Join(cfg.PKIDir, "intermediate.key")
+
+	if err := os.WriteFile(intCertPath, bundleData, 0644); err != nil {
+		return fmt.Errorf("write int cert: %w", err)
+	}
+
+	rootKeyData, err := os.ReadFile(rootKey)
+	if err != nil {
+		return fmt.Errorf("read root key: %w", err)
+	}
+	if err := os.WriteFile(intKeyPath, rootKeyData, 0600); err != nil {
+		return fmt.Errorf("write int key: %w", err)
+	}
+
+	return nil
 }
