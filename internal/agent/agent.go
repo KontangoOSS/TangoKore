@@ -14,7 +14,6 @@
 package agent
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -60,13 +59,6 @@ func (c *BootConfig) telemetrySvc() string {
 		return c.TelemetryService
 	}
 	return "nats.tango"
-}
-
-func (c *BootConfig) configSvc() string {
-	if c.ConfigService != "" {
-		return c.ConfigService
-	}
-	return "config.tango"
 }
 
 func (c *BootConfig) defaultInterval() time.Duration {
@@ -394,130 +386,6 @@ func handleInstruction(instr Instruction, boot BootConfig, machineID string, zit
 // -- Config channel (legacy TCP, kept for backwards compat) ------------------
 
 // runConfigChannel dials config.tango, sends the machine ID, and reads
-// instructions pushed down by the controller. Reconnects on disconnect.
-func runConfigChannel(ctx context.Context, zitiCtx ziti.Context, boot BootConfig, machineID string, eventCh chan<- []byte, intervalCh chan<- time.Duration, configReady chan struct{}, logger *slog.Logger) {
-	backoff := 5 * time.Second
-	for {
-		if ctx.Err() != nil {
-			return
-		}
-
-		conn, err := zitiCtx.Dial(boot.configSvc())
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(backoff):
-				if backoff < 5*time.Minute {
-					backoff *= 2
-				}
-			}
-			continue
-		}
-		backoff = 5 * time.Second
-
-		readInstructions(ctx, conn, boot, machineID, zitiCtx, eventCh, intervalCh, configReady, logger)
-		conn.Close()
-
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(15 * time.Second):
-		}
-	}
-}
-
-func readInstructions(ctx context.Context, conn io.ReadWriteCloser, boot BootConfig, machineID string, zitiCtx ziti.Context, eventCh chan<- []byte, intervalCh chan<- time.Duration, configReady chan struct{}, logger *slog.Logger) {
-	go func() { <-ctx.Done(); conn.Close() }()
-
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-		var instr Instruction
-		if err := json.Unmarshal(line, &instr); err != nil {
-			continue
-		}
-
-		switch instr.Type {
-		case "hello":
-			// Controller pushes this immediately on connect and via heartbeat
-			// response. Contains operational params only — interval, profile
-			// name for logging. Ziti identity and role attributes are immutable
-			// from the agent's perspective; the controller owns those.
-			var cfg helloPayload
-			if err := json.Unmarshal(instr.Payload, &cfg); err == nil {
-				state.mu.Lock()
-				state.hello = cfg
-				state.hasHello = true
-				state.mu.Unlock()
-				if cfg.Interval > 0 {
-					select {
-					case intervalCh <- time.Duration(cfg.Interval) * time.Second:
-					default:
-					}
-				}
-			}
-			// Signal that initial config has been received — unblocks telemetry start.
-			select {
-			case configReady <- struct{}{}:
-			default:
-			}
-
-		case "config":
-			// Full config replacement pushed by the controller. Replaces the
-			// in-memory state and stays active until the next push. This is
-			// the primary mechanism for updating agent configuration —
-			// controller pushes a message, agent applies it immediately.
-			var cfg helloPayload
-			if err := json.Unmarshal(instr.Payload, &cfg); err == nil {
-				state.mu.Lock()
-				state.hello = cfg
-				state.hasHello = true
-				state.mu.Unlock()
-				if cfg.Interval > 0 {
-					select {
-					case intervalCh <- time.Duration(cfg.Interval) * time.Second:
-					default:
-					}
-				}
-				logger.Info("config updated", "nickname", cfg.Nickname, "interval", cfg.Interval)
-			}
-
-		case "apply":
-			// Deploy a new config profile. Pulls the bundle from git over
-			// Ziti, writes the bao-agent config, delivers AppRole creds,
-			// and restarts the bao-agent unit (which starts the app with
-			// secrets injected as env vars — nothing on disk).
-			go func() {
-				result := handleApply(ctx, zitiCtx, instr.Payload, logger)
-				if ev, err := encodeEvent(machineID, "apply", result); err == nil {
-					select {
-					case eventCh <- ev:
-					default:
-					}
-				}
-			}()
-
-		case "set_interval":
-			var p struct {
-				Seconds int `json:"seconds"`
-			}
-			if err := json.Unmarshal(instr.Payload, &p); err == nil && p.Seconds > 0 {
-				select {
-				case intervalCh <- time.Duration(p.Seconds) * time.Second:
-				default:
-				}
-			}
-
-		case "reload":
-			return
-		}
-	}
-}
-
 // -- Telemetry (NATS over Ziti) ----------------------------------------------
 
 // runTelemetry starts all collectors and fans their output into a single NATS

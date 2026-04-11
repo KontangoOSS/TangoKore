@@ -115,14 +115,13 @@ func runEnroll(url, session, roleID, secretID string, scanMethod bool) error {
 	log.Println("")
 
 	log.Println("enrolling…")
-	// Always pass empty string for method - server determines it based on data
-	sseResult, err := enroll.SSEEnroll(url, "", session, roleID, secretID)
+	// Method is determined by server based on credentials
+	sseResult, err := enroll.SSEEnroll(url, session, roleID, secretID)
 	if err != nil {
 		return fmt.Errorf("enrollment: %w", err)
 	}
 
-	var result *enrollResult
-	result = &enrollResult{
+	result := &enrollResult{
 		ID:       sseResult.ID,
 		Nickname: sseResult.Nickname,
 		Identity: sseResult.Identity,

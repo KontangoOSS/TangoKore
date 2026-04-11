@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 	"time"
 )
 
@@ -368,20 +367,12 @@ func (c *ZitiClient) ListServices() ([]map[string]interface{}, error) {
 
 // UpdateIdentityAttributes updates role attributes on an identity
 func (c *ZitiClient) UpdateIdentityAttributes(identityID string, attrs []string) error {
-	// First, get current identity
-	resp, err := c.request("GET", fmt.Sprintf("identities/%s", identityID), nil)
-	if err != nil {
-		return err
-	}
-
-	data := resp["data"].(map[string]interface{})
-
-	// Update with new attrs
+	// Update identity attributes
 	body := map[string]interface{}{
 		"roleAttributes": attrs,
 	}
 
-	_, err = c.request("PATCH", fmt.Sprintf("identities/%s", identityID), body)
+	_, err := c.request("PATCH", fmt.Sprintf("identities/%s", identityID), body)
 	return err
 }
 
