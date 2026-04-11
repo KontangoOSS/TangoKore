@@ -18,8 +18,13 @@ import (
 func stepBaoInit(cfg *Config) error {
 	log.Println("step 4/13: initializing OpenBao...")
 
-	// 1. Create data directory
+	// 0. Clean up any existing Bao state (for fresh bootstrap)
 	baoDataDir := filepath.Join(cfg.Home, "data", "bao")
+	if err := os.RemoveAll(baoDataDir); err != nil {
+		return fmt.Errorf("cleanup bao data: %w", err)
+	}
+
+	// 1. Create data directory
 	if err := os.MkdirAll(baoDataDir, 0755); err != nil {
 		return fmt.Errorf("mkdir bao data: %w", err)
 	}
@@ -50,6 +55,9 @@ func stepBaoInit(cfg *Config) error {
 	if !waitForPort("127.0.0.1:8200", 30*time.Second) {
 		return fmt.Errorf("bao API not responding on port 8200")
 	}
+
+	// Wait a bit more for Bao to fully initialize
+	time.Sleep(2 * time.Second)
 
 	// 5. Initialize or join Bao
 	_, unsealKey, rootToken, err := initOrJoinBao(cfg)
