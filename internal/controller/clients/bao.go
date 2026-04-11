@@ -190,6 +190,11 @@ func (c *BaoClient) EnableEngine(path, engineType string) error {
 	}
 
 	_, err := c.request("POST", fmt.Sprintf("sys/mounts/%s", path), body)
+
+	// If already mounted, that's OK
+	if err != nil && strings.Contains(err.Error(), "path is already in use") {
+		return nil
+	}
 	return err
 }
 
@@ -200,6 +205,11 @@ func (c *BaoClient) EnableAuth(path, authType string) error {
 	}
 
 	_, err := c.request("POST", fmt.Sprintf("sys/auth/%s", path), body)
+
+	// If already mounted, that's OK
+	if err != nil && strings.Contains(err.Error(), "path is already in use") {
+		return nil
+	}
 	return err
 }
 
@@ -612,8 +622,8 @@ func (c *BaoClient) EnableAppRole() error {
 // CreateAppRoleRole creates an AppRole with policies and TTL
 func (c *BaoClient) CreateAppRoleRole(roleName string, policies []string, ttl string) error {
 	body := map[string]interface{}{
+		"token_max_ttl": ttl,
 		"token_ttl": ttl,
-		"token_max_ttl": "24h",
 		"policies": policies,
 	}
 	_, err := c.request("POST", fmt.Sprintf("auth/approle/role/%s", roleName), body)
