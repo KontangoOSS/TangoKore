@@ -376,6 +376,61 @@ func (c *ZitiClient) UpdateIdentityAttributes(identityID string, attrs []string)
 	return err
 }
 
+// CreateCA registers a 3rd party CA (e.g., Bao-signed intermediate) with Ziti
+// Returns the CA ID and verification token
+func (c *ZitiClient) CreateCA(name, certPEM string, autoCa, ottCa, authEnabled bool) (caID, verificationToken string, err error) {
+	body := map[string]interface{}{
+		"name":                  name,
+		"certPem":               certPEM,
+		"isAutoCaEnabled":       autoCa,
+		"isOttCaEnabled":        ottCa,
+		"isAuthEnabled":         authEnabled,
+	}
+
+	resp, err := c.request("POST", "cas", body)
+	if err != nil {
+		return "", "", err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	id, ok := data["id"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid id field: %T", data["id"])
+	}
+	token, ok := data["verificationToken"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid verificationToken field: %T", data["verificationToken"])
+	}
+	return id, token, nil
+}
+
+// VerifyCA verifies a 3rd party CA by submitting a verification certificate signed by the CA
+func (c *ZitiClient) VerifyCA(caID, verifyCertPEM string) error {
+	body := map[string]interface{}{
+		"certPem": verifyCertPEM,
+	}
+
+	_, err := c.request("POST", fmt.Sprintf("cas/%s/verify", caID), body)
+	return err
+}
+
+// GetCA retrieves details about a registered CA
+func (c *ZitiClient) GetCA(caID string) (map[string]interface{}, error) {
+	resp, err := c.request("GET", fmt.Sprintf("cas/%s", caID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	return data, nil
+}
+
 // ExecuteCommand runs a CLI command (for Ziti CLI operations)
 func (c *ZitiClient) ExecuteCommand(args ...string) error {
 	// This would use the ziti CLI binary
