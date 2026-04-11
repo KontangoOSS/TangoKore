@@ -3,157 +3,185 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"strings"
-
-	"github.com/KontangoOSS/TangoKore/internal/controller/clients"
 )
 
-// stepPKI generates PKI using Bao: root CA → intermediate → all certs
+// stepPKI generates PKI using Ziti native PKI tools (compatible with SPIFFE URIs)
+// This matches the working kore/kontango-installer pattern
 func stepPKI(cfg *Config) error {
-	log.Println("step 5/13: configuring PKI with Bao...")
+	log.Println("step 5/13: configuring PKI with Ziti...")
 
-	// Create Bao client with root token from step 4
-	rootToken, unsealKey, err := loadBaoInit(cfg)
-	if err != nil {
-		return fmt.Errorf("load bao init: %w", err)
+	pkiDir := cfg.PKIDir
+
+	// Clean up old PKI state (ziti pki create fails if CAs already exist)
+	if err := os.RemoveAll(pkiDir); err != nil {
+		return fmt.Errorf("cleanup pki dir: %w", err)
 	}
 
-	// Debug: verify token is loaded
-	if rootToken == "" {
-		return fmt.Errorf("root token is empty")
-	}
-	log.Printf("  → loaded root token (len=%d): %s\n", len(rootToken), rootToken)
-
-	client, err := clients.NewBaoClient("https://127.0.0.1:8200", rootToken, "")
-	if err != nil {
-		return fmt.Errorf("create bao client: %w", err)
+	if err := os.MkdirAll(pkiDir, 0755); err != nil {
+		return fmt.Errorf("mkdir pki: %w", err)
 	}
 
-	// 1. Mount PKI engines
-	log.Println("  → mounting PKI engines...")
-	if err := client.PKIMount("pki"); err != nil {
-		return fmt.Errorf("mount pki: %w", err)
-	}
-	if err := client.PKIMount("pki_int"); err != nil {
-		return fmt.Errorf("mount pki_int: %w", err)
-	}
+	// Generate PKI using ziti pki commands (which support SPIFFE URIs)
+	// Based on: kore/kontango-installer/modules/lib/ziti.sh
 
-	// 2. Configure URLs
-	log.Println("  → configuring PKI URLs...")
-	baoURL := fmt.Sprintf("https://%s.%s/pki/ca", cfg.Name, cfg.Domain)
-	crlURL := fmt.Sprintf("https://%s.%s/pki/crl", cfg.Name, cfg.Domain)
-	if err := client.PKIConfigURLs("pki", baoURL, crlURL); err != nil {
-		return fmt.Errorf("config urls: %w", err)
-	}
-
-	// 3. Generate root CA
+	// 1. Root CA
 	log.Println("  → generating root CA...")
-	keyType := "ec"
-	if cfg.TestMode {
-		keyType = "ec" // Use EC for speed in test mode
+	cmd := exec.Command("ziti", "pki", "create", "ca",
+		"--pki-root", pkiDir,
+		"--ca-name", "root-ca",
+		"--ca-file", "root-ca",
+		"--trust-domain", cfg.Domain)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("generate root ca: %s", string(out))
 	}
-	rootCertPEM, err := client.PKIGenerateRoot("pki", keyType, "Kontango Root CA", "87600h")
+
+	// 2. Intermediate CA
+	log.Println("  → generating intermediate CA...")
+	intName := fmt.Sprintf("intermediate-%s", cfg.Name)
+	cmd = exec.Command("ziti", "pki", "create", "intermediate",
+		"--pki-root", pkiDir,
+		"--ca-name", "root-ca",
+		"--intermediate-name", intName,
+		"--intermediate-file", intName)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("generate intermediate: %s", string(out))
+	}
+
+	// 3. Server certificate with SPIFFE URI and SANs
+	log.Println("  → generating server certificate...")
+	sanDomains := fmt.Sprintf("%s,%s.%s,*.%s", cfg.Domain, cfg.Name, cfg.Domain, cfg.Domain)
+	spiffeID := fmt.Sprintf("spiffe://%s/controller/%s", cfg.Domain, cfg.Name)
+	cmd = exec.Command("ziti", "pki", "create", "server",
+		"--pki-root", pkiDir,
+		"--ca-name", intName,
+		"--server-name", cfg.Name,
+		"--server-file", "server",
+		"--dns", sanDomains,
+		"--ip", fmt.Sprintf("%s,127.0.0.1", cfg.NodePublicIP),
+		"--spiffe-id", spiffeID)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("generate server cert: %s", string(out))
+	}
+
+	// 4. Client certificate
+	log.Println("  → generating client certificate...")
+	cmd = exec.Command("ziti", "pki", "create", "client",
+		"--pki-root", pkiDir,
+		"--ca-name", intName,
+		"--client-name", "client",
+		"--client-file", "client")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("generate client cert: %s", string(out))
+	}
+
+	// 5. Build certificate chains for use in Ziti config
+	log.Println("  → building certificate chains...")
+	intDir := filepath.Join(pkiDir, intName)
+
+	// Server chain: server.cert + intermediate + root
+	serverChainData, err := buildCertChain(
+		filepath.Join(intDir, "certs", "server.cert"),
+		filepath.Join(intDir, "certs", fmt.Sprintf("%s.cert", intName)),
+		filepath.Join(pkiDir, "root-ca", "certs", "root-ca.cert"),
+	)
 	if err != nil {
-		return fmt.Errorf("generate root: %w", err)
+		return fmt.Errorf("build server chain: %w", err)
 	}
 
-	// 4. Generate intermediate CSR
-	log.Println("  → generating intermediate CSR...")
-	csrPEM, intKeyPEM, err := client.PKIGenerateIntermediateCSR("pki_int", keyType, "Kontango Intermediate CA")
+	// CA bundle: intermediate + root
+	caBundleData, err := buildCertChain(
+		filepath.Join(intDir, "certs", fmt.Sprintf("%s.cert", intName)),
+		filepath.Join(pkiDir, "root-ca", "certs", "root-ca.cert"),
+	)
 	if err != nil {
-		return fmt.Errorf("generate csr: %w", err)
+		return fmt.Errorf("build ca bundle: %w", err)
 	}
 
-	// 5. Sign intermediate with root
-	log.Println("  → signing intermediate with root CA...")
-	signedIntCertPEM, err := client.PKISignIntermediate("pki", csrPEM, "Kontango Intermediate CA", "43800h", 0)
-	if err != nil {
-		return fmt.Errorf("sign intermediate: %w", err)
-	}
-
-	// 6. Set signed intermediate
-	log.Println("  → setting signed intermediate...")
-	if err := client.PKISetSignedIntermediate("pki_int", signedIntCertPEM); err != nil {
-		return fmt.Errorf("set signed intermediate: %w", err)
-	}
-
-	// 7. Create PKI role for server certificates
-	log.Println("  → creating server certificate role...")
-	if err := client.CreatePKIRoleOnMount("pki_int", "server",
-		[]string{cfg.Domain, "*."+cfg.Domain, "*.tango", "bao.tango"}, "8760h"); err != nil {
-		return fmt.Errorf("create server role: %w", err)
-	}
-
-	// 8. Write certs to disk
+	// 6. Write chains to /etc/kontango/pki for use in config
 	log.Println("  → writing certificates to disk...")
-	pems := map[string]string{
-		"root-ca.crt":     rootCertPEM,
-		"intermediate.crt": signedIntCertPEM,
-		"intermediate.key": intKeyPEM,
+	etcPkiDir := filepath.Join(cfg.EtcDir, "pki")
+	if err := os.MkdirAll(etcPkiDir, 0755); err != nil {
+		return fmt.Errorf("mkdir etc/pki: %w", err)
 	}
 
-	for name, pem := range pems {
-		path := filepath.Join(cfg.EtcDir, "pki", name)
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return fmt.Errorf("mkdir: %w", err)
-		}
-		mode := os.FileMode(0644)
-		if strings.Contains(name, "key") {
-			mode = 0600
-		}
-		if err := os.WriteFile(path, []byte(pem), mode); err != nil {
-			return fmt.Errorf("write %s: %w", name, err)
-		}
+	// Write server files
+	serverCertPath := filepath.Join(intDir, "certs", "server.cert")
+	serverKeyPath := filepath.Join(intDir, "keys", "server.key")
+	intKeyPath := filepath.Join(intDir, "keys", fmt.Sprintf("%s.key", intName))
+
+	// Copy/symlink server cert
+	if err := copyFile(serverCertPath, filepath.Join(etcPkiDir, "server.crt")); err != nil {
+		return fmt.Errorf("copy server cert: %w", err)
 	}
 
-	// 8. Create signing chain
-	signingChain := signedIntCertPEM + "\n" + rootCertPEM
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "signing-chain.crt"), []byte(signingChain), 0644); err != nil {
+	// Copy/symlink server key
+	if err := copyFile(serverKeyPath, filepath.Join(etcPkiDir, "server.key")); err != nil {
+		return fmt.Errorf("copy server key: %w", err)
+	}
+
+	// Copy/symlink intermediate key (for signing)
+	if err := copyFile(intKeyPath, filepath.Join(etcPkiDir, "intermediate.key")); err != nil {
+		return fmt.Errorf("copy intermediate key: %w", err)
+	}
+
+	// Write server chain
+	if err := os.WriteFile(filepath.Join(etcPkiDir, "server.crt"), serverChainData, 0644); err != nil {
+		return fmt.Errorf("write server chain: %w", err)
+	}
+
+	// Write signing chain (for enrollment)
+	if err := os.WriteFile(filepath.Join(etcPkiDir, "signing-chain.crt"), caBundleData, 0644); err != nil {
 		return fmt.Errorf("write signing chain: %w", err)
 	}
 
-	// 9. Create CA bundle (same as signing chain)
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "ca-bundle.pem"), []byte(signingChain), 0644); err != nil {
+	// Write CA bundle
+	if err := os.WriteFile(filepath.Join(etcPkiDir, "ca-bundle.pem"), caBundleData, 0644); err != nil {
 		return fmt.Errorf("write ca bundle: %w", err)
 	}
 
-	// 10. Issue server cert for this node (will be used for Bao TLS)
-	log.Println("  → issuing server certificate...")
-	serverCert, serverKey, _, err := client.PKIIssueCert("pki_int", "server", cfg.Name+"."+cfg.Domain, "720h", []string{"*."+cfg.Domain})
+	log.Println("  ✓ PKI generated successfully")
+	return nil
+}
+
+// buildCertChain concatenates certificates in order
+func buildCertChain(certPaths ...string) ([]byte, error) {
+	var chain []byte
+
+	for _, certPath := range certPaths {
+		certData, err := os.ReadFile(certPath)
+		if err != nil {
+			return nil, fmt.Errorf("read cert %s: %w", certPath, err)
+		}
+		chain = append(chain, certData...)
+		chain = append(chain, '\n')
+	}
+
+	return chain, nil
+}
+
+// copyFile copies a file from src to dst, preserving content
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("issue server cert: %w", err)
+		return fmt.Errorf("open source: %w", err)
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("create dest: %w", err)
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return fmt.Errorf("copy: %w", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "server.crt"), []byte(serverCert), 0644); err != nil {
-		return fmt.Errorf("write server cert: %w", err)
-	}
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "server.key"), []byte(serverKey), 0600); err != nil {
-		return fmt.Errorf("write server key: %w", err)
-	}
-
-	// 11. For now, reuse server cert for Bao's own TLS (bao.tango internal DNS)
-	// TODO: Issue dedicated Bao cert when role is properly set up
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "bao-server.crt"), []byte(serverCert), 0644); err != nil {
-		return fmt.Errorf("write bao cert: %w", err)
-	}
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "bao-server.key"), []byte(serverKey), 0600); err != nil {
-		return fmt.Errorf("write bao key: %w", err)
-	}
-
-	// 12. Create PKI role definitions for device certificates (to be created in step 10)
-	log.Println("  → defining PKI roles...")
-	if err := definePKIRoles(); err != nil {
-		return fmt.Errorf("define roles: %w", err)
-	}
-
-	// 13. Save unseal key for reference (will be in Bao KV after step 6)
-	cfg.BaoUnsealKey = unsealKey
-	cfg.BaoRootToken = rootToken
-
-	log.Println("  ✓ PKI configured with Bao root CA")
 	return nil
 }
 
@@ -173,47 +201,4 @@ func loadBaoInit(cfg *Config) (rootToken, unsealKey string, err error) {
 	}
 
 	return init["root_token"], init["unseal_key"], nil
-}
-
-// definePKIRoles creates role definitions for device certificates
-// These will be created in Bao during step 10 (stepIdentities)
-func definePKIRoles() error {
-	roles := map[string]map[string]interface{}{
-		"device-base": {
-			"allowed_domains":  []string{"web.example.com"},
-			"allow_subdomains": true,
-			"max_ttl":          "8760h",
-			"key_type":         "ec",
-			"description":      "Base device identity (1 year)",
-		},
-		"device-web": {
-			"allowed_domains":  []string{"web.example.com"},
-			"allow_subdomains": true,
-			"max_ttl":          "24h",
-			"key_type":         "ec",
-			"description":      "Web testing (24h, quarantine)",
-		},
-		"device-temp": {
-			"allowed_domains":  []string{"temp.example.com"},
-			"allow_subdomains": true,
-			"max_ttl":          "168h",
-			"key_type":         "ec",
-			"description":      "Temporary (1 week)",
-		},
-		"device-tango": {
-			"allowed_domains":  []string{"tango"},
-			"allow_subdomains": true,
-			"max_ttl":          "720h",
-			"key_type":         "ec",
-			"description":      "Overlay network (30 days)",
-		},
-	}
-
-	// Store role definitions for later use in step 10
-	// For now, just log that they're defined
-	for name := range roles {
-		log.Printf("    - %s\n", name)
-	}
-
-	return nil
 }

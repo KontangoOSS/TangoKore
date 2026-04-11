@@ -30,6 +30,12 @@ func stepStoreCreds(cfg *Config) error {
 		return fmt.Errorf("enable kv v2: %w", err)
 	}
 
+	// 1b. Enable AppRole auth method
+	log.Println("  → enabling AppRole auth method...")
+	if err := client.EnableAuth("approle", "approle"); err != nil {
+		return fmt.Errorf("enable approle: %w", err)
+	}
+
 	// 2. Write Bao init data (unseal key + root token)
 	log.Println("  → storing Bao init data...")
 	initData := map[string]interface{}{

@@ -19,6 +19,12 @@ func stepACL(cfg *Config) error {
 		return nil
 	}
 
+	// Skip in test mode
+	if cfg.TestMode {
+		log.Println("  ⚠ skipping ACL (test mode)")
+		return nil
+	}
+
 	// Load Bao root token from step 4
 	rootToken, _, err := loadBaoInit(cfg)
 	if err != nil {

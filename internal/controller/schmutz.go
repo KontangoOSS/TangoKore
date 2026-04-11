@@ -16,6 +16,12 @@ import (
 func stepSchmutz(cfg *Config) error {
 	log.Println("step 9/13: configuring schmutz enrollment service...")
 
+	// Skip in test mode - schmutz binary not included
+	if cfg.TestMode {
+		log.Println("  ⚠ skipping schmutz (test mode)")
+		return nil
+	}
+
 	// For now, assume controller mode (TODO: add NodeRole to Config for split-node)
 	isController := !cfg.JoinMode
 

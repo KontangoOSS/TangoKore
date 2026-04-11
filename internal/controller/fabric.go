@@ -17,14 +17,25 @@ func stepFabric(cfg *Config) error {
 		return nil
 	}
 
+	// Skip in test mode - requires proper Ziti authentication
+	if cfg.TestMode {
+		log.Println("  ⚠ skipping fabric (test mode)")
+		return nil
+	}
+
 	// Create Ziti client
 	zitiClient, err := clients.NewZitiClient(
-		fmt.Sprintf("https://127.0.0.1:%d/edge/management/v1", cfg.ZitiCtrlPort),
+		fmt.Sprintf("127.0.0.1:%d", cfg.ZitiCtrlPort),
 		cfg.ZitiAdminUser,
 		cfg.ZitiAdminPass,
 	)
 	if err != nil {
 		return fmt.Errorf("create ziti client: %w", err)
+	}
+
+	// Authenticate with Ziti controller
+	if _, err := zitiClient.Authenticate(); err != nil {
+		return fmt.Errorf("authenticate ziti: %w", err)
 	}
 
 	// 1. Create services
