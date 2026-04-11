@@ -341,11 +341,6 @@ func (c *BaoClient) IssueCert(roleName, commonName string, ttl string) (cert, ke
 	return cert, key, nil
 }
 
-// EnableCertAuth enables certificate-based authentication
-func (c *BaoClient) EnableCertAuth(path string) error {
-	return c.EnableAuth(path, "cert")
-}
-
 // CreateCertRole creates a certificate auth role that maps cert CN patterns to identities
 // For example: role "lab-devices" could match CN pattern "*.lab.example.com" -> identity "lab-stage"
 func (c *BaoClient) CreateCertRole(name string, certCNPattern string, identityName string, policies []string) error {
@@ -430,4 +425,193 @@ func (c *BaoClient) GetMountAccessor(authPath string) (string, error) {
 		return "", fmt.Errorf("invalid accessor field: %T", data["accessor"])
 	}
 	return accessor, nil
+}
+
+// PKIMount mounts a PKI engine at the given path
+func (c *BaoClient) PKIMount(mountPath string) error {
+	body := map[string]interface{}{
+		"type": "pki",
+	}
+	_, err := c.request("POST", fmt.Sprintf("sys/mounts/%s", mountPath), body)
+	return err
+}
+
+// PKIConfigURLs configures the URLs for a PKI mount (issuing CA, CRL distribution)
+func (c *BaoClient) PKIConfigURLs(mountPath, issuingURL, crlURL string) error {
+	body := map[string]interface{}{
+		"issuing_certificates": []string{issuingURL},
+		"crl_distribution_points": []string{crlURL},
+	}
+	_, err := c.request("POST", fmt.Sprintf("%s/config/urls", mountPath), body)
+	return err
+}
+
+// PKIGenerateRoot generates a self-signed root CA certificate
+func (c *BaoClient) PKIGenerateRoot(mountPath, keyType, commonName, ttl string) (certPEM string, err error) {
+	body := map[string]interface{}{
+		"key_type": keyType,
+		"common_name": commonName,
+		"ttl": ttl,
+	}
+	resp, err := c.request("POST", fmt.Sprintf("%s/root/generate/internal", mountPath), body)
+	if err != nil {
+		return "", err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	cert, ok := data["certificate"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid certificate field: %T", data["certificate"])
+	}
+	return cert, nil
+}
+
+// PKIGenerateIntermediateCSR generates an intermediate CA CSR (with private key exported)
+func (c *BaoClient) PKIGenerateIntermediateCSR(mountPath, keyType, commonName string) (csrPEM, keyPEM string, err error) {
+	body := map[string]interface{}{
+		"key_type": keyType,
+		"common_name": commonName,
+	}
+	resp, err := c.request("POST", fmt.Sprintf("%s/intermediate/generate/exported", mountPath), body)
+	if err != nil {
+		return "", "", err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	csr, ok := data["csr"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid csr field: %T", data["csr"])
+	}
+	key, ok := data["private_key"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid private_key field: %T", data["private_key"])
+	}
+	return csr, key, nil
+}
+
+// PKISignIntermediate signs an intermediate CSR with the root CA
+func (c *BaoClient) PKISignIntermediate(rootMount, csr, commonName, ttl string, maxPathLen int) (certPEM string, err error) {
+	body := map[string]interface{}{
+		"csr": csr,
+		"common_name": commonName,
+		"ttl": ttl,
+		"max_path_length": maxPathLen,
+	}
+	resp, err := c.request("POST", fmt.Sprintf("%s/root/sign-intermediate", rootMount), body)
+	if err != nil {
+		return "", err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	cert, ok := data["certificate"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid certificate field: %T", data["certificate"])
+	}
+	return cert, nil
+}
+
+// PKISetSignedIntermediate sets the signed intermediate certificate on the intermediate mount
+func (c *BaoClient) PKISetSignedIntermediate(mountPath, certPEM string) error {
+	body := map[string]interface{}{
+		"certificate": certPEM,
+	}
+	_, err := c.request("POST", fmt.Sprintf("%s/intermediate/set-signed", mountPath), body)
+	return err
+}
+
+// PKIIssueCert issues a certificate from a PKI role with optional alt names
+func (c *BaoClient) PKIIssueCert(mountPath, roleName, commonName, ttl string, altNames []string) (cert, key, ca string, err error) {
+	body := map[string]interface{}{
+		"common_name": commonName,
+		"ttl": ttl,
+	}
+	if len(altNames) > 0 {
+		body["alt_names"] = altNames
+	}
+	resp, err := c.request("POST", fmt.Sprintf("%s/issue/%s", mountPath, roleName), body)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", "", "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	cert, ok = data["certificate"].(string)
+	if !ok {
+		return "", "", "", fmt.Errorf("invalid certificate field: %T", data["certificate"])
+	}
+	key, ok = data["private_key"].(string)
+	if !ok {
+		return "", "", "", fmt.Errorf("invalid private_key field: %T", data["private_key"])
+	}
+	ca, ok = data["ca_chain"].(string)
+	if !ok {
+		// ca_chain may not always be present, use certificate_chain or ca
+		if chain, ok := data["ca_chain"]; ok {
+			ca, _ = chain.(string)
+		}
+	}
+	return cert, key, ca, nil
+}
+
+// EnableAppRole enables the AppRole auth method (returns error if already enabled, which is OK)
+func (c *BaoClient) EnableAppRole() error {
+	return c.EnableAuth("approle", "approle")
+}
+
+// CreateAppRoleRole creates an AppRole with policies and TTL
+func (c *BaoClient) CreateAppRoleRole(roleName string, policies []string, ttl string) error {
+	body := map[string]interface{}{
+		"token_ttl": ttl,
+		"token_max_ttl": "24h",
+		"policies": policies,
+	}
+	_, err := c.request("POST", fmt.Sprintf("auth/approle/role/%s", roleName), body)
+	return err
+}
+
+// CreateAppRoleSecret creates a new secret ID for an AppRole role
+func (c *BaoClient) CreateAppRoleSecret(roleName string) (string, error) {
+	resp, err := c.request("POST", fmt.Sprintf("auth/approle/role/%s/secret-id", roleName), nil)
+	if err != nil {
+		return "", err
+	}
+
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	secretID, ok := data["secret_id"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid secret_id field: %T", data["secret_id"])
+	}
+	return secretID, nil
+}
+
+// EnableCertAuth enables the cert auth method at a specific path
+func (c *BaoClient) EnableCertAuth(mountPath string) error {
+	return c.EnableAuth(mountPath, "cert")
+}
+
+// CreateCertAuthRole creates a certificate auth role that maps certificates to policies
+func (c *BaoClient) CreateCertAuthRole(mountPath, roleName, certPEM string, policies []string) error {
+	body := map[string]interface{}{
+		"certificate": certPEM,
+		"display_name": roleName,
+		"ttl": "24h",
+		"max_ttl": "24h",
+		"policies": policies,
+	}
+	_, err := c.request("POST", fmt.Sprintf("auth/%s/certs/%s", mountPath, roleName), body)
+	return err
 }
