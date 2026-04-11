@@ -22,7 +22,6 @@ var (
 	colorOrange  = lipgloss.Color("#f58220")
 	colorMuted   = lipgloss.Color("#6b7280")
 	colorError   = lipgloss.Color("#e53e3e")
-	colorBg      = lipgloss.Color("#1a1a2e")
 
 	styleBanner = lipgloss.NewStyle().
 			Foreground(colorPrimary).
@@ -49,9 +48,6 @@ var (
 	styleSelected = lipgloss.NewStyle().
 			Foreground(colorPrimary).
 			Bold(true)
-
-	styleStep = lipgloss.NewStyle().
-			Foreground(colorOrange)
 
 	styleSectionTitle = lipgloss.NewStyle().
 				Foreground(colorPrimary).

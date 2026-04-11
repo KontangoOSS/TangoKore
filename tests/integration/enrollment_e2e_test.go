@@ -119,7 +119,7 @@ func TestE2E_PreAuthAnnouncement(t *testing.T) {
 	log.Printf("[CLIENT] Method: new (unknown machine)\n")
 
 	// Call SSEEnroll (the machine announcing itself)
-	result, err := enroll.SSEEnroll(server.URL, "", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)
@@ -229,7 +229,7 @@ func TestE2E_ReturningMachineFlow(t *testing.T) {
 	log.Printf("[CLIENT] This machine has enrolled before")
 	log.Printf("[CLIENT] Re-enrolling with --scan to restore previous identity\n")
 
-	result, err := enroll.SSEEnroll(server.URL, "scan", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)
@@ -324,7 +324,7 @@ func TestE2E_AppRoleAuthFlow(t *testing.T) {
 	log.Printf("[CLIENT] This machine has AppRole credentials (pre-provisioned)")
 	log.Printf("[CLIENT] Enrolling with --role-id and --secret-id\n")
 
-	result, err := enroll.SSEEnroll(server.URL, "", "", "test-role-id", "test-secret-id")
+	result, err := enroll.SSEEnroll(server.URL, "", "test-role-id", "test-secret-id")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)
@@ -632,7 +632,7 @@ func TestE2E_FullLoggedFlow(t *testing.T) {
 	log.Printf("Connecting to enrollment server: %s", server.URL)
 	log.Printf("")
 
-	result, err := enroll.SSEEnroll(server.URL, "", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 
 	if err != nil {
 		t.Fatalf("enrollment failed: %v", err)

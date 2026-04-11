@@ -19,8 +19,6 @@ func main() {
 		cmdEnroll(os.Args[2:])
 	case "agent":
 		cmdAgent(os.Args[2:])
-	case "portal":
-		cmdPortal(os.Args[2:])
 	case "status":
 		cmdStatus(os.Args[2:])
 	case "reset":
@@ -46,7 +44,6 @@ func printUsage() {
 Machine Commands:
   enroll       Enroll this machine onto the mesh
   agent        Start the machine agent (telemetry + config listener)
-  portal       Start the local web portal (docs + machine status)
   status       Show machine status
   reset        Remove all kontango services, identity, and binaries
 
@@ -61,7 +58,6 @@ Utility:
 Usage:
   kontango enroll <url> [--scan] [--role-id ID --secret-id SECRET]
   kontango agent [--identity /opt/kontango/identity.json]
-  kontango portal [--listen :8800] [--identity /opt/kontango/identity.json]
   kontango status [--json]
   kontango reset [--yes]
   kontango cluster create [--name NAME] [--nodes N] [--region REGION]

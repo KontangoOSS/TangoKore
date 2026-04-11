@@ -211,8 +211,6 @@ func extractTarGz(data []byte, destDir string) error {
 	return cmd.Run()
 }
 
-type bytesReaderWrapper struct{ *io.SectionReader }
-
 func bytesReader(data []byte) io.Reader {
 	return io.NewSectionReader(readerAt(data), 0, int64(len(data)))
 }

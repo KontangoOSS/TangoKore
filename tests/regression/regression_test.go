@@ -37,7 +37,7 @@ func TestRegression_SSEDuplicate(t *testing.T) {
 	defer server.Close()
 
 	// Call SSEEnroll (which should call SSEEnrollStream internally)
-	result1, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result1, err := enroll.SSEEnroll(server.URL, "", "", "")
 	if err != nil {
 		t.Fatalf("SSEEnroll error: %v", err)
 	}

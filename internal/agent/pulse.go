@@ -87,57 +87,6 @@ func encodeAppPulse(kv KV) ([]byte, error) {
 	return msgpack.Marshal(kv)
 }
 
-// decodeKV deserialises a msgpack payload. Handles both arrays (system)
-// and maps (application).
-func decodeKV(data []byte) (KV, error) {
-	// Try map first (app pulses)
-	var kv KV
-	if err := msgpack.Unmarshal(data, &kv); err == nil {
-		return kv, nil
-	}
-	// Try array (system pulses)
-	var arr []interface{}
-	if err := msgpack.Unmarshal(data, &arr); err != nil {
-		return nil, err
-	}
-	return decodeSystemArray(arr), nil
-}
-
-// decodeSystemArray converts the positional array back to a KV map.
-func decodeSystemArray(arr []interface{}) KV {
-	kv := make(KV)
-	get := func(i int) string {
-		if i >= len(arr) || arr[i] == nil {
-			return ""
-		}
-		return fmt.Sprintf("%v", arr[i])
-	}
-	if v := get(SysHostname); v != "" { kv["hostname"] = v }
-	if v := get(SysOS); v != "" { kv["os"] = v }
-	if v := get(SysArch); v != "" { kv["arch"] = v }
-	if v := get(SysCPUs); v != "" { kv["cpus"] = v }
-	if v := get(SysLoad); v != "" {
-		// Decode load * 100 back to float string
-		if n, ok := arr[SysLoad].(uint16); ok {
-			kv["load"] = fmt.Sprintf("%.2f", float64(n)/100)
-		} else if n, ok := arr[SysLoad].(uint64); ok {
-			kv["load"] = fmt.Sprintf("%.2f", float64(n)/100)
-		} else {
-			kv["load"] = v
-		}
-	}
-	if v := get(SysMemMB); v != "" { kv["mem_mb"] = v }
-	if v := get(SysMemAvail); v != "" { kv["mem_avail_mb"] = v }
-	if v := get(SysUptime); v != "" { kv["up"] = v }
-	if v := get(SysNick); v != "" { kv["nick"] = v }
-	if v := get(SysState); v != "" { kv["state"] = v }
-	if v := get(SysProfile); v != "" { kv["profile"] = v }
-	return kv
-}
-
-// pulseMessage framing for the event channel.
-// [1 byte slug len][slug][payload]
-type pulseMessage struct{}
 
 func encodePulseMessage(slug string, data []byte) ([]byte, error) {
 	slugBytes := []byte(slug)

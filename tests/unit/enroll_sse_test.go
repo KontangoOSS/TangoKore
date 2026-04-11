@@ -67,7 +67,7 @@ func TestSSEEnroll_NewMachine(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestSSEEnroll_RejectedMachine(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -130,7 +130,7 @@ func TestSSEEnroll_ServerError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -151,7 +151,7 @@ func TestSSEEnroll_NoIdentity(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -169,7 +169,7 @@ func TestSSEEnroll_HTTP404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := enroll.SSEEnroll(server.URL, "new", "", "", "")
+	result, err := enroll.SSEEnroll(server.URL, "", "", "")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

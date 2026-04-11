@@ -201,12 +201,11 @@ func SSEEnrollStream(url, method, session, roleID, secretID, profile string, eve
 // - Credentials (AppRole, JWT, session token)
 // - Server policy
 //
-// Deprecated: The method parameter should not be used. Pass empty string
-// and let the server determine the enrollment method based on credentials.
-func SSEEnroll(url, method, session, roleID, secretID string) (*EnrollResult, error) {
+// SSEEnroll is a convenience wrapper that calls SSEEnrollStream with logging.
+// The enrollment method is determined by the server based on credentials.
+func SSEEnroll(url, session, roleID, secretID string) (*EnrollResult, error) {
 	// Collect probe data to log before sending
 	payload := map[string]interface{}{
-		"method":  method,
 		"session": session,
 	}
 	if roleID != "" {
@@ -231,7 +230,7 @@ func SSEEnroll(url, method, session, roleID, secretID string) (*EnrollResult, er
 	}
 
 	// Call SSEEnrollStream with a logging callback
-	return SSEEnrollStream(url, method, session, roleID, secretID, "", func(evt SSEEvent) {
+	return SSEEnrollStream(url, "", session, roleID, secretID, "", func(evt SSEEvent) {
 		switch evt.Kind {
 		case "verify":
 			status := "✓"

@@ -2,8 +2,6 @@ package enroll
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"runtime"
 	"time"
 )
@@ -70,20 +68,3 @@ func zitiOSString() string {
 	}
 }
 
-func binaryExtension() string {
-	if runtime.GOOS == "windows" {
-		return ".exe"
-	}
-	return ""
-}
-
-func defaultKontangoDir() string {
-	switch runtime.GOOS {
-	case "windows":
-		return filepath.Join(os.Getenv("ProgramData"), "kontango")
-	case "darwin":
-		return "/usr/local/kontango"
-	default:
-		return "/opt/kontango"
-	}
-}

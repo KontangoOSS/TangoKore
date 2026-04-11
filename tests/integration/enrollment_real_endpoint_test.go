@@ -130,7 +130,7 @@ func TestE2E_RealEndpoint_Announcement(t *testing.T) {
 	log.Printf("Connecting to: %s\n", controllerURL)
 
 	// Send the enrollment
-	result, err := enroll.SSEEnroll(controllerURL, "", "", "", "")
+	result, err := enroll.SSEEnroll(controllerURL, "", "", "")
 
 	if err != nil {
 		log.Printf("\n❌ ENROLLMENT FAILED: %v\n", err)
