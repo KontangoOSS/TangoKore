@@ -8,9 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
 
 // stepPKI generates PKI using Ziti native PKI tools (compatible with SPIFFE URIs)
+// For production: Ziti PKI for SPIFFE/mesh, LE certs for Bao TLS listener
 // This matches the working kore/kontango-installer pattern
 func stepPKI(cfg *Config) error {
 	log.Println("step 5/13: configuring PKI with Ziti...")
@@ -52,7 +54,9 @@ func stepPKI(cfg *Config) error {
 		return fmt.Errorf("generate intermediate: %s", string(out))
 	}
 
-	// 3. Server certificate with SPIFFE URI and SANs
+	// 3. Server certificate with SPIFFE URI (for Ziti)
+	// Note: In production, this is self-signed SPIFFE-URI cert for Ziti mesh identity
+	// Real LE certs come from Caddy/Cloudflare DNS-01 at runtime
 	log.Println("  → generating server certificate...")
 	sanDomains := fmt.Sprintf("%s,%s.%s,*.%s", cfg.Domain, cfg.Name, cfg.Domain, cfg.Domain)
 	spiffeID := fmt.Sprintf("spiffe://%s/controller/%s", cfg.Domain, cfg.Name)
@@ -182,6 +186,65 @@ func copyFile(src, dst string) error {
 		return fmt.Errorf("copy: %w", err)
 	}
 
+	return nil
+}
+
+// stepPKIFromLeader fetches PKI from leader's Bao KV (for join nodes)
+func stepPKIFromLeader(cfg *Config) error {
+	log.Println("step 4b/13: fetching PKI from leader...")
+
+	// For join nodes, PKI is already on disk from step 3 bao-init
+	// Just verify the certs exist and are readable
+	etcPkiDir := filepath.Join(cfg.EtcDir, "pki")
+
+	requiredFiles := []string{
+		"root-ca.crt",
+		"intermediate.crt",
+		"intermediate.key",
+		"signing-chain.crt",
+		"server.crt",
+		"server.key",
+	}
+
+	// Check if all required files exist
+	allExist := true
+	for _, file := range requiredFiles {
+		path := filepath.Join(etcPkiDir, file)
+		if _, err := os.Stat(path); err != nil {
+			allExist = false
+			log.Printf("  ⚠ missing %s: %v", file, err)
+		}
+	}
+
+	if !allExist {
+		// PKI not yet available from leader; this will be populated when Bao syncs
+		log.Println("  ⚠ PKI files not yet available (Bao still syncing from leader)")
+		log.Println("  → waiting for Bao to replicate PKI...")
+
+		// Poll for PKI files to appear (up to 60s)
+		deadline := time.Now().Add(60 * time.Second)
+		for time.Now().Before(deadline) {
+			allExist = true
+			for _, file := range requiredFiles {
+				path := filepath.Join(etcPkiDir, file)
+				if _, err := os.Stat(path); err != nil {
+					allExist = false
+					break
+				}
+			}
+			if allExist {
+				log.Println("  ✓ PKI files replicated from leader")
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+
+		if !allExist {
+			return fmt.Errorf("PKI files not replicated from leader within 60s")
+		}
+	}
+
+	log.Println("  ✓ PKI verified")
 	return nil
 }
 

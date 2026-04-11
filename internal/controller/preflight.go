@@ -66,15 +66,6 @@ func stepPreflight(cfg *Config) error {
 		return fmt.Errorf("firewall: %w", err)
 	}
 
-	// For test mode, generate self-signed certs now so Bao can start with TLS
-	if cfg.TestMode {
-		log.Println("  → generating test-mode PKI certs...")
-		if err := generateTestPKI(cfg); err != nil {
-			return fmt.Errorf("generate test PKI: %w", err)
-		}
-		log.Println("  ✓ test PKI certs generated")
-	}
-
 	return nil
 }
 
