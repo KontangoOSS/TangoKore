@@ -84,13 +84,6 @@ func SSEEnrollStream(url, method, session, roleID, secretID, profile string, eve
 	if profile != "" {
 		payload["profile"] = profile
 	}
-	for _, m := range []map[string]interface{}{os, hw, net, sys} {
-		for k, v := range m {
-			if k != "type" {
-				payload[k] = v
-			}
-		}
-	}
 
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", url+"/api/enroll/stream", bytes.NewReader(body))
