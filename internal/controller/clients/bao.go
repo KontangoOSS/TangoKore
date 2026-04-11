@@ -313,6 +313,25 @@ func (c *BaoClient) CreatePKIRole(roleName string, allowedDomains []string, allo
 	return err
 }
 
+// CreatePKIRoleOnMount creates a PKI role on a specific mount
+func (c *BaoClient) CreatePKIRoleOnMount(mountPath, roleName string, allowedDomains []string, maxTTL string) error {
+	body := map[string]interface{}{
+		"allowed_domains":   allowedDomains,
+		"allow_subdomains":  true,
+		"max_ttl":           maxTTL,
+		"key_type":          "ec",
+		"key_bits":          256,
+		"require_cn":        false,
+		"generate_lease":    true,
+		"server_flag":       true,
+		"client_flag":       true,
+		"enforce_hostnames": false,
+	}
+
+	_, err := c.request("POST", fmt.Sprintf("%s/roles/%s", mountPath, roleName), body)
+	return err
+}
+
 // IssueCert issues a certificate from a PKI role
 func (c *BaoClient) IssueCert(roleName, commonName string, ttl string) (cert, key string, err error) {
 	body := map[string]interface{}{
