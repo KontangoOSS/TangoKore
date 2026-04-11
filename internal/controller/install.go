@@ -65,9 +65,9 @@ type step struct {
 var steps = []step{
 	{"preflight", stepPreflight},
 	{"download", stepDownload},
+	{"bao-init", stepBaoInit},
 	{"pki", stepPKI},
 	{"ziti", stepZiti},
-	{"bao", stepBao},
 	{"store-creds", stepStoreCreds},
 	{"caddy", stepCaddy},
 	{"schmutz", stepSchmutz},
