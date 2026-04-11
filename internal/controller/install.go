@@ -60,21 +60,32 @@ type Config struct {
 type step struct {
 	name string
 	fn   func(*Config) error
+	skip func(*Config) bool // Return true to skip this step
 }
 
-var steps = []step{
-	{"preflight", stepPreflight},
-	{"download", stepDownload},
-	{"bao-init", stepBaoInit},
-	{"pki", stepPKI},
-	{"ziti", stepZiti},
-	{"store-creds", stepStoreCreds},
-	{"caddy", stepCaddy},
-	{"schmutz", stepSchmutz},
-	{"identities", stepIdentities},
-	{"fabric", stepFabric},
-	{"acl", stepACL},
-	{"verify", stepVerify},
+// buildSteps constructs the step list with conditional skip logic
+func buildSteps(cfg *Config) []step {
+	return []step{
+		{"preflight", stepPreflight, nil},
+		{"download", stepDownload, nil},
+		// Bao: init for leader, join for followers
+		{"bao-init", stepBaoInit, func(c *Config) bool { return c.JoinMode }},
+		{"bao-join", stepBaoJoin, func(c *Config) bool { return !c.JoinMode }},
+		// PKI: generate for leader, fetch from leader for followers
+		{"pki", stepPKI, func(c *Config) bool { return c.JoinMode }},
+		{"pki-from-leader", stepPKIFromLeader, func(c *Config) bool { return !c.JoinMode }},
+		{"ziti", stepZiti, nil},
+		// Store credentials: controller-only (not replicated from leader)
+		{"store-creds", stepStoreCreds, func(c *Config) bool { return c.JoinMode }},
+		// Caddy: skipped (controllers don't need Caddy)
+		{"caddy", stepCaddy, func(c *Config) bool { return true }},
+		{"schmutz", stepSchmutz, nil},
+		// Controller-only: identities, fabric, acl
+		{"identities", stepIdentities, func(c *Config) bool { return c.JoinMode }},
+		{"fabric", stepFabric, func(c *Config) bool { return c.JoinMode }},
+		{"acl", stepACL, func(c *Config) bool { return c.JoinMode }},
+		{"verify", stepVerify, nil},
+	}
 }
 
 // Install runs the complete controller bootstrap
@@ -151,8 +162,17 @@ func Install(cfg *Config) error {
 	log.Printf("HOME: %s\n", cfg.Home)
 	log.Printf("OVERLAY: %s\n\n", cfg.OverlayDomain)
 
+	// Build step list with conditional skip logic
+	steps := buildSteps(cfg)
+
 	// Run each step
 	for _, s := range steps {
+		// Check if step should be skipped
+		if s.skip != nil && s.skip(cfg) {
+			log.Printf("[%s] skipped (conditional)\n", s.name)
+			continue
+		}
+
 		// Check if already completed
 		sentinel := filepath.Join(cfg.EtcDir, fmt.Sprintf(".step-%s-done", s.name))
 		if _, err := os.Stat(sentinel); err == nil {

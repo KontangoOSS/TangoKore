@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -247,13 +248,96 @@ func initOrJoinBao(cfg *Config) (*clients.BaoClient, string, string, error) {
 		return client.WithToken(rootToken), unsealKey, rootToken, nil
 
 	} else {
-		// Join mode: join an existing Bao cluster
-		log.Printf("  → joining Bao cluster at %s\n", cfg.JoinLeader)
+		// Join mode: join an existing Bao cluster via raft
+		log.Printf("  → joining Bao raft cluster at %s\n", cfg.JoinLeader)
 
-		// Use raft join via bao CLI (not yet available in client)
-		// For now, just return an error indicating this needs CLI implementation
-		return nil, "", "", fmt.Errorf("join mode requires CLI implementation (TODO: add bao operator raft join)")
+		// Start Bao in standby mode (it will join via raft automatically)
+		// The bao operator raft join command will be called after Bao starts
+		return client, "", "", nil
 	}
+}
+
+// stepBaoJoin joins an existing Bao raft cluster (for follower nodes)
+func stepBaoJoin(cfg *Config) error {
+	log.Println("step 3b/13: joining Bao raft cluster...")
+
+	// 0. Clean up any existing Bao state
+	baoDataDir := filepath.Join(cfg.Home, "data", "bao")
+	if err := os.RemoveAll(baoDataDir); err != nil {
+		return fmt.Errorf("cleanup bao data: %w", err)
+	}
+
+	// 1. Create data directory
+	if err := os.MkdirAll(baoDataDir, 0755); err != nil {
+		return fmt.Errorf("mkdir bao data: %w", err)
+	}
+
+	// 2. Generate openbao.hcl config (same as init, but Bao will be a follower)
+	log.Println("  → generating Bao config...")
+	if err := generateBaoConfig(cfg); err != nil {
+		return fmt.Errorf("generate config: %w", err)
+	}
+
+	// 3. Install systemd service (reuse same function)
+	log.Println("  → installing systemd service...")
+	if err := installBaoService(cfg); err != nil {
+		return fmt.Errorf("install systemd service: %w", err)
+	}
+
+	// 4. Start Bao in standby mode
+	log.Println("  → starting Bao (standby mode)...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "systemctl", "restart", "kontango-bao")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("systemctl restart: %w", err)
+	}
+
+	// Wait for Bao to be ready
+	log.Println("  → waiting for Bao API (up to 30s)...")
+	if !waitForPort("127.0.0.1:8200", 30*time.Second) {
+		return fmt.Errorf("bao API not responding on port 8200")
+	}
+
+	time.Sleep(2 * time.Second)
+
+	// 5. Join the raft cluster using bao CLI
+	log.Println("  → joining raft cluster via bao CLI...")
+	leaderAddr := fmt.Sprintf("https://%s:8201", cfg.JoinLeader)
+	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Note: bao operator raft join requires the leader's cluster address
+	// The leader address should point to the raft cluster port (8201)
+	joinCmd := exec.CommandContext(ctx, "bao", "operator", "raft", "join",
+		"-leader-tls-servername="+cfg.Name+"."+cfg.Domain,
+		leaderAddr)
+
+	if out, err := joinCmd.CombinedOutput(); err != nil {
+		// Check if already joined
+		if strings.Contains(string(out), "already a member") {
+			log.Println("  ⚠ already a member of the cluster")
+		} else {
+			return fmt.Errorf("bao operator raft join: %s", string(out))
+		}
+	} else {
+		log.Println("  ✓ joined raft cluster")
+	}
+
+	// 6. Verify cluster membership
+	log.Println("  → verifying cluster membership...")
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	membersCmd := exec.CommandContext(ctx, "bao", "operator", "raft", "list-peers")
+	if out, err := membersCmd.CombinedOutput(); err != nil {
+		log.Printf("  ⚠ could not verify membership: %v", err)
+	} else {
+		log.Printf("  ✓ cluster peers:\n%s", string(out))
+	}
+
+	log.Println("  ✓ Bao joined cluster and ready")
+	return nil
 }
 
 // waitForPort waits for a TCP port to be open

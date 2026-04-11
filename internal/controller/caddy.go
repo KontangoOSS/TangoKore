@@ -16,11 +16,10 @@ import (
 func stepCaddy(cfg *Config) error {
 	log.Println("step 8/13: configuring Caddy reverse proxy...")
 
-	// Skip on controllers — Caddy runs on edge routers only
-	if !cfg.JoinMode && !isEdgeRouter(cfg) {
-		log.Println("  ⚠ skipping Caddy (controller node)")
-		return nil
-	}
+	// Skip Caddy entirely — controllers don't run Caddy
+	// Edge router support is future work
+	log.Println("  ⚠ skipping Caddy (controller only deployment)")
+	return nil
 
 	// 1. Generate Caddyfile
 	log.Println("  → generating Caddyfile...")
