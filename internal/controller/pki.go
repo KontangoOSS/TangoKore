@@ -25,11 +25,7 @@ func stepPKI(cfg *Config) error {
 	if rootToken == "" {
 		return fmt.Errorf("root token is empty")
 	}
-	tokenLen := len(rootToken)
-	if tokenLen > 20 {
-		tokenLen = 20
-	}
-	log.Printf("  → loaded root token: %s...\n", rootToken[:tokenLen])
+	log.Printf("  → loaded root token (len=%d): %s\n", len(rootToken), rootToken)
 
 	client, err := clients.NewBaoClient("https://127.0.0.1:8200", rootToken, "")
 	if err != nil {
@@ -87,7 +83,7 @@ func stepPKI(cfg *Config) error {
 	// 7. Create PKI role for server certificates
 	log.Println("  → creating server certificate role...")
 	if err := client.CreatePKIRoleOnMount("pki_int", "server",
-		[]string{cfg.Domain, "*."+cfg.Domain, "*.tango"}, "8760h"); err != nil {
+		[]string{cfg.Domain, "*."+cfg.Domain, "*.tango", "bao.tango"}, "8760h"); err != nil {
 		return fmt.Errorf("create server role: %w", err)
 	}
 
@@ -126,7 +122,7 @@ func stepPKI(cfg *Config) error {
 
 	// 10. Issue server cert for this node (will be used for Bao TLS)
 	log.Println("  → issuing server certificate...")
-	serverCert, serverKey, _, err := client.PKIIssueCert("pki_int", "server", cfg.Name+"."+cfg.Domain, "8760h", []string{cfg.Domain})
+	serverCert, serverKey, _, err := client.PKIIssueCert("pki_int", "server", cfg.Name+"."+cfg.Domain, "720h", []string{"*."+cfg.Domain})
 	if err != nil {
 		return fmt.Errorf("issue server cert: %w", err)
 	}
@@ -138,17 +134,12 @@ func stepPKI(cfg *Config) error {
 		return fmt.Errorf("write server key: %w", err)
 	}
 
-	// 11. Issue Bao's own TLS cert (for bao.tango internal DNS)
-	log.Println("  → issuing Bao TLS certificate...")
-	baoCert, baoKey, _, err := client.PKIIssueCert("pki_int", "server", "bao.tango", "8760h", nil)
-	if err != nil {
-		return fmt.Errorf("issue bao cert: %w", err)
-	}
-
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "bao-server.crt"), []byte(baoCert), 0644); err != nil {
+	// 11. For now, reuse server cert for Bao's own TLS (bao.tango internal DNS)
+	// TODO: Issue dedicated Bao cert when role is properly set up
+	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "bao-server.crt"), []byte(serverCert), 0644); err != nil {
 		return fmt.Errorf("write bao cert: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "bao-server.key"), []byte(baoKey), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(cfg.EtcDir, "pki", "bao-server.key"), []byte(serverKey), 0600); err != nil {
 		return fmt.Errorf("write bao key: %w", err)
 	}
 
@@ -169,11 +160,13 @@ func stepPKI(cfg *Config) error {
 // loadBaoInit loads the temporary bao-init.json from step 4
 func loadBaoInit(cfg *Config) (rootToken, unsealKey string, err error) {
 	initPath := filepath.Join(cfg.EtcDir, "bao-init.json")
+	log.Printf("    DEBUG: reading init from %s\n", initPath)
 	data, err := os.ReadFile(initPath)
 	if err != nil {
 		return "", "", fmt.Errorf("read init: %w", err)
 	}
 
+	log.Printf("    DEBUG: init file content: %s\n", string(data))
 	var init map[string]string
 	if err := json.Unmarshal(data, &init); err != nil {
 		return "", "", fmt.Errorf("unmarshal init: %w", err)

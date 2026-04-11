@@ -66,8 +66,10 @@ func (c *BaoClient) request(method, endpoint string, body interface{}) (map[stri
 	u.Path = path.Join(u.Path, "v1", endpoint)
 
 	var bodyReader io.Reader
+	var bodyBytes []byte
 	if body != nil {
-		bodyBytes, err := json.Marshal(body)
+		var err error
+		bodyBytes, err = json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("marshal body: %w", err)
 		}
@@ -82,8 +84,17 @@ func (c *BaoClient) request(method, endpoint string, body interface{}) (map[stri
 	req.Header.Set("X-Vault-Token", c.Token)
 	req.Header.Set("Content-Type", "application/json")
 
+	// Debug: log the request details
+	if strings.Contains(endpoint, "mount") {
+		fmt.Printf("DEBUG REQUEST: %s %s\n", method, u.String())
+		fmt.Printf("  Token: %s\n", c.Token)
+		fmt.Printf("  Body: %s\n", string(bodyBytes))
+		fmt.Printf("  Headers: %v\n", req.Header)
+	}
+
 	resp, err := c.client.Do(req)
 	if err != nil {
+		fmt.Printf("DEBUG: Request failed: %v\n", err)
 		return nil, fmt.Errorf("request: %w", err)
 	}
 	defer resp.Body.Close()
@@ -91,6 +102,10 @@ func (c *BaoClient) request(method, endpoint string, body interface{}) (map[stri
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read body: %w", err)
+	}
+
+	if strings.Contains(endpoint, "mount") {
+		fmt.Printf("DEBUG RESPONSE: HTTP %d\n  Body: %s\n", resp.StatusCode, string(respBody))
 	}
 
 	if resp.StatusCode >= 400 {
