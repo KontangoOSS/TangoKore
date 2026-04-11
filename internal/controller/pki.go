@@ -21,6 +21,16 @@ func stepPKI(cfg *Config) error {
 		return fmt.Errorf("load bao init: %w", err)
 	}
 
+	// Debug: verify token is loaded
+	if rootToken == "" {
+		return fmt.Errorf("root token is empty")
+	}
+	tokenLen := len(rootToken)
+	if tokenLen > 20 {
+		tokenLen = 20
+	}
+	log.Printf("  → loaded root token: %s...\n", rootToken[:tokenLen])
+
 	client, err := clients.NewBaoClient("https://127.0.0.1:8200", rootToken, "")
 	if err != nil {
 		return fmt.Errorf("create bao client: %w", err)
@@ -74,7 +84,14 @@ func stepPKI(cfg *Config) error {
 		return fmt.Errorf("set signed intermediate: %w", err)
 	}
 
-	// 7. Write certs to disk
+	// 7. Create PKI role for server certificates
+	log.Println("  → creating server certificate role...")
+	if err := client.CreatePKIRoleOnMount("pki_int", "server",
+		[]string{cfg.Domain, "*."+cfg.Domain, "*.tango"}, "8760h"); err != nil {
+		return fmt.Errorf("create server role: %w", err)
+	}
+
+	// 8. Write certs to disk
 	log.Println("  → writing certificates to disk...")
 	pems := map[string]string{
 		"root-ca.crt":     rootCertPEM,
