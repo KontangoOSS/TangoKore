@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/KontangoOSS/TangoKore/internal/controller"
 )
@@ -151,22 +152,118 @@ func cmdControllerStatus(args []string) {
 
 	log.SetFlags(0)
 
-	// Check if controller config exists
-	// For now, just return a status indicating if we're in a controlled state
-	status := map[string]interface{}{
-		"configured": false,
-		"healthy":    false,
-		"reason":     "controller not configured",
-	}
+	status := getControllerStatus()
 
 	if *jsonOut {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		enc.Encode(status)
 	} else {
-		fmt.Printf("controller status: not configured\n")
-		fmt.Printf("run: kontango controller create --name <name>\n")
+		// Pretty-print status
+		if configured, ok := status["configured"].(bool); ok && configured {
+			fmt.Printf("✓ controller configured\n")
+		} else {
+			fmt.Printf("✗ controller not configured\n")
+		}
+
+		if nodeRole, ok := status["node_role"].(string); ok {
+			fmt.Printf("  node role: %s\n", nodeRole)
+		}
+
+		if services, ok := status["services"].(map[string]interface{}); ok {
+			fmt.Printf("  services:\n")
+			for svc, active := range services {
+				if isActive, ok := active.(bool); ok {
+					mark := "✓"
+					if !isActive {
+						mark = "✗"
+					}
+					fmt.Printf("    %s %s\n", mark, svc)
+				}
+			}
+		}
+
+		if healthy, ok := status["healthy"].(bool); ok {
+			if healthy {
+				fmt.Printf("  health: operational\n")
+			} else {
+				fmt.Printf("  health: degraded\n")
+			}
+		}
 	}
+}
+
+func getControllerStatus() map[string]interface{} {
+	status := map[string]interface{}{
+		"configured": false,
+		"healthy":    false,
+		"node_role":  "unknown",
+		"services":   map[string]interface{}{},
+	}
+
+	// Check if config file exists
+	cfgPath := "/etc/kontango/installer.env"
+	_, err := os.Stat(cfgPath)
+	if err != nil {
+		return status
+	}
+
+	status["configured"] = true
+
+	// Parse config to determine node role
+	// In real implementation, would parse cfg.JoinMode from installer.env
+	isJoinMode := false // Assume controller for now; would parse from config
+
+	var nodeRole string
+	if isJoinMode {
+		nodeRole = "edge-router"
+	} else {
+		nodeRole = "controller"
+	}
+	status["node_role"] = nodeRole
+
+	// Check systemd services
+	services := map[string]interface{}{}
+
+	if isJoinMode {
+		// Edge router services
+		for _, svc := range []string{
+			"kontango-ziti-router",
+			"kontango-caddy",
+			"kontango-schmutz-gateway",
+		} {
+			services[svc] = checkService(svc)
+		}
+	} else {
+		// Controller services
+		for _, svc := range []string{
+			"kontango-bao",
+			"kontango-ziti-controller",
+			"kontango-schmutz-controller",
+		} {
+			services[svc] = checkService(svc)
+		}
+	}
+
+	status["services"] = services
+
+	// Check overall health
+	allHealthy := true
+	for _, active := range services {
+		if isActive, ok := active.(bool); ok && !isActive {
+			allHealthy = false
+			break
+		}
+	}
+	status["healthy"] = allHealthy
+
+	return status
+}
+
+func checkService(serviceName string) bool {
+	// Run systemctl is-active
+	cmd := exec.Command("systemctl", "is-active", "--quiet", serviceName)
+	return cmd.Run() == nil
 }
 
 func printControllerUsage() {
