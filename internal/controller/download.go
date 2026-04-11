@@ -1,16 +1,12 @@
 package controller
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
+
+	"github.com/KontangoOSS/TangoKore/internal/util"
 )
 
 // stepDownload downloads required binaries
@@ -18,25 +14,25 @@ func stepDownload(cfg *Config) error {
 	log.Println("downloading binaries...")
 
 	binaries := []struct {
-		name       string
-		path       string
-		url        string
-		extractTar bool // if true, extract from tar.gz
-		tarPath    string // path within tar
+		name    string
+		path    string
+		url     string
+		format  string // "tar.gz", "zip", or "binary"
+		binName string // binary name within archive (for tar.gz/zip)
 	}{
 		{
-			name:       "ziti",
-			path:       filepath.Join(cfg.BinDir, "ziti"),
-			url:        fmt.Sprintf("https://github.com/openziti/ziti/releases/download/v%s/ziti-linux-amd64-%s.tar.gz", cfg.ZitiVersion, cfg.ZitiVersion),
-			extractTar: true,
-			tarPath:    "ziti",
+			name:    "ziti",
+			path:    filepath.Join(cfg.BinDir, "ziti"),
+			url:     fmt.Sprintf("https://github.com/openziti/ziti/releases/download/v%s/ziti-linux-amd64-%s.tar.gz", cfg.ZitiVersion, cfg.ZitiVersion),
+			format:  "tar.gz",
+			binName: "ziti",
 		},
 		{
-			name:       "caddy",
-			path:       filepath.Join(cfg.BinDir, "caddy"),
-			url:        "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_amd64.tar.gz",
-			extractTar: true,
-			tarPath:    "caddy",
+			name:    "caddy",
+			path:    filepath.Join(cfg.BinDir, "caddy"),
+			url:     "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_amd64.tar.gz",
+			format:  "tar.gz",
+			binName: "caddy",
 		},
 	}
 
@@ -44,15 +40,17 @@ func stepDownload(cfg *Config) error {
 	if !cfg.TestMode {
 		binaries = append(binaries,
 			struct {
-				name       string
-				path       string
-				url        string
-				extractTar bool
-				tarPath    string
+				name    string
+				path    string
+				url     string
+				format  string
+				binName string
 			}{
-				name: "bao",
-				path: filepath.Join(cfg.BinDir, "bao"),
-				url:  fmt.Sprintf("https://releases.hashicorp.com/openbao/%s/openbao_%s_linux_amd64.zip", cfg.BaoVersion, cfg.BaoVersion),
+				name:    "bao",
+				path:    filepath.Join(cfg.BinDir, "bao"),
+				url:     fmt.Sprintf("https://releases.hashicorp.com/openbao/%s/openbao_%s_linux_amd64.zip", cfg.BaoVersion, cfg.BaoVersion),
+				format:  "zip",
+				binName: "bao",
 			},
 		)
 	}
@@ -61,15 +59,16 @@ func stepDownload(cfg *Config) error {
 	if !cfg.TestMode {
 		binaries = append(binaries,
 			struct {
-				name       string
-				path       string
-				url        string
-				extractTar bool
-				tarPath    string
+				name    string
+				path    string
+				url     string
+				format  string
+				binName string
 			}{
-				name: "schmutz-controller",
-				path: filepath.Join(cfg.BinDir, "schmutz-controller"),
-				url:  fmt.Sprintf("https://%s/download/schmutz-controller-linux-amd64", cfg.JoinDomain),
+				name:   "schmutz-controller",
+				path:   filepath.Join(cfg.BinDir, "schmutz-controller"),
+				url:    fmt.Sprintf("https://%s/download/schmutz-controller-linux-amd64", cfg.JoinDomain),
+				format: "binary",
 			},
 		)
 	}
@@ -83,97 +82,27 @@ func stepDownload(cfg *Config) error {
 
 		log.Printf("  → downloading %s from %s...\n", bin.name, bin.url)
 
-		if bin.extractTar {
-			if err := downloadTarFile(bin.url, bin.path, bin.tarPath); err != nil {
-				return fmt.Errorf("download %s: %w", bin.name, err)
-			}
-		} else {
-			if err := downloadFile(bin.url, bin.path); err != nil {
-				return fmt.Errorf("download %s: %w", bin.name, err)
-			}
+		var err error
+		destDir := filepath.Dir(bin.path)
+		os.MkdirAll(destDir, 0755)
+
+		switch bin.format {
+		case "tar.gz":
+			err = util.DownloadAndExtractTarGz(bin.url, destDir, bin.binName)
+		case "zip":
+			err = util.DownloadAndExtractZip(bin.url, destDir, bin.binName)
+		case "binary":
+			err = util.DownloadBinary(bin.url, bin.path)
+		default:
+			err = fmt.Errorf("unknown format: %s", bin.format)
 		}
 
-		// Make executable
-		if err := os.Chmod(bin.path, 0755); err != nil {
-			return fmt.Errorf("chmod %s: %w", bin.name, err)
+		if err != nil {
+			return fmt.Errorf("download %s: %w", bin.name, err)
 		}
 
 		log.Printf("  ✓ %s downloaded and executable\n", bin.name)
 	}
 
 	return nil
-}
-
-// downloadFile downloads a file from URL to path
-func downloadFile(url, path string) error {
-	client := &http.Client{
-		Timeout: 5 * time.Minute,
-	}
-
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("http get: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("http %d", resp.StatusCode)
-	}
-
-	out, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create file: %w", err)
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	return err
-}
-
-// downloadTarFile downloads a tar.gz file and extracts a specific file
-func downloadTarFile(url, destPath, tarPath string) error {
-	client := &http.Client{
-		Timeout: 5 * time.Minute,
-	}
-
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("http get: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("http %d", resp.StatusCode)
-	}
-
-	// Decompress gzip
-	gzipReader, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return fmt.Errorf("gzip reader: %w", err)
-	}
-	defer gzipReader.Close()
-
-	// Extract tar
-	tarReader := tar.NewReader(gzipReader)
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			return fmt.Errorf("file %s not found in archive", tarPath)
-		}
-		if err != nil {
-			return fmt.Errorf("tar read: %w", err)
-		}
-
-		// Match filename
-		if strings.Contains(header.Name, tarPath) || header.Name == tarPath {
-			out, err := os.Create(destPath)
-			if err != nil {
-				return fmt.Errorf("create file: %w", err)
-			}
-			defer out.Close()
-
-			_, err = io.Copy(out, tarReader)
-			return err
-		}
-	}
 }

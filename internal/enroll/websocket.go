@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 )
 
 // WebSocketEnroll connects to the WebSocket enrollment endpoint, sends a hello message,

@@ -113,10 +113,16 @@ func (c *BaoClient) SealStatus() (initialized, sealed bool, err error) {
 		return false, false, err
 	}
 
-	initialized = resp["initialized"].(bool)
-	sealed = resp["sealed"].(bool)
+	init, ok := resp["initialized"].(bool)
+	if !ok {
+		return false, false, fmt.Errorf("invalid initialized field: %T", resp["initialized"])
+	}
+	sealed, ok = resp["sealed"].(bool)
+	if !ok {
+		return false, false, fmt.Errorf("invalid sealed field: %T", resp["sealed"])
+	}
 
-	return initialized, sealed, nil
+	return init, sealed, nil
 }
 
 // Init initializes Bao with given shares/threshold
@@ -131,11 +137,22 @@ func (c *BaoClient) Init(shares, threshold int) (unsealKey, rootToken string, er
 		return "", "", err
 	}
 
-	keys := resp["keys"].([]interface{})
-	if len(keys) > 0 {
-		unsealKey = keys[0].(string)
+	keys, ok := resp["keys"].([]interface{})
+	if !ok {
+		return "", "", fmt.Errorf("invalid keys field: %T", resp["keys"])
 	}
-	rootToken = resp["root_token"].(string)
+	if len(keys) > 0 {
+		key, ok := keys[0].(string)
+		if !ok {
+			return "", "", fmt.Errorf("invalid key in keys array: %T", keys[0])
+		}
+		unsealKey = key
+	}
+	token, ok := resp["root_token"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid root_token field: %T", resp["root_token"])
+	}
+	rootToken = token
 
 	return unsealKey, rootToken, nil
 }
@@ -226,8 +243,15 @@ func (c *BaoClient) GetAppRoleID(name string) (string, error) {
 		return "", err
 	}
 
-	data := resp["data"].(map[string]interface{})
-	return data["role_id"].(string), nil
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	roleID, ok := data["role_id"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid role_id field: %T", data["role_id"])
+	}
+	return roleID, nil
 }
 
 // CreateAppRoleSecretID creates a new secret ID for an AppRole
@@ -237,8 +261,15 @@ func (c *BaoClient) CreateAppRoleSecretID(name string) (string, error) {
 		return "", err
 	}
 
-	data := resp["data"].(map[string]interface{})
-	return data["secret_id"].(string), nil
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	secretID, ok := data["secret_id"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid secret_id field: %T", data["secret_id"])
+	}
+	return secretID, nil
 }
 
 // AppRoleLogin logs in with AppRole credentials
@@ -253,8 +284,15 @@ func (c *BaoClient) AppRoleLogin(roleID, secretID string) (string, error) {
 		return "", err
 	}
 
-	auth := resp["auth"].(map[string]interface{})
-	return auth["client_token"].(string), nil
+	auth, ok := resp["auth"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid auth field: %T", resp["auth"])
+	}
+	token, ok := auth["client_token"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid client_token field: %T", auth["client_token"])
+	}
+	return token, nil
 }
 
 // CreatePKIRole creates a PKI role in the pki mount
@@ -287,9 +325,18 @@ func (c *BaoClient) IssueCert(roleName, commonName string, ttl string) (cert, ke
 		return "", "", err
 	}
 
-	data := resp["data"].(map[string]interface{})
-	cert = data["certificate"].(string)
-	key = data["private_key"].(string)
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	cert, ok = data["certificate"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid certificate field: %T", data["certificate"])
+	}
+	key, ok = data["private_key"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("invalid private_key field: %T", data["private_key"])
+	}
 
 	return cert, key, nil
 }
@@ -331,8 +378,15 @@ func (c *BaoClient) CreateEntityAlias(authPath string, cnPattern string, entityI
 		return "", err
 	}
 
-	data := resp["data"].(map[string]interface{})
-	return data["id"].(string), nil
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	id, ok := data["id"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid id field: %T", data["id"])
+	}
+	return id, nil
 }
 
 // CreateEntity creates a named entity (identity) in Bao
@@ -349,8 +403,15 @@ func (c *BaoClient) CreateEntity(name string, policies []string, metadata map[st
 		return "", err
 	}
 
-	data := resp["data"].(map[string]interface{})
-	return data["id"].(string), nil
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	id, ok := data["id"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid id field: %T", data["id"])
+	}
+	return id, nil
 }
 
 // GetMountAccessor retrieves the accessor for a mounted auth method
@@ -360,7 +421,13 @@ func (c *BaoClient) GetMountAccessor(authPath string) (string, error) {
 		return "", err
 	}
 
-	data := resp["data"].(map[string]interface{})
-	accessor := data["accessor"].(string)
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid data field: %T", resp["data"])
+	}
+	accessor, ok := data["accessor"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid accessor field: %T", data["accessor"])
+	}
 	return accessor, nil
 }

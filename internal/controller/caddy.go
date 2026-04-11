@@ -76,5 +76,5 @@ func generateTLSBlock(cfg *Config) string {
 	}
 
 	// Production: DNS-01 for root domain
-	return fmt.Sprintf("tls {\n    dns cloudflare {env.CLOUDFLARE_API_TOKEN}\n  }")
+	return "tls {\n    dns cloudflare {env.CLOUDFLARE_API_TOKEN}\n  }"
 }

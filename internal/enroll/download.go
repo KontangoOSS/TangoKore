@@ -1,139 +1,23 @@
 package enroll
 
 import (
-	"archive/tar"
-	"archive/zip"
-	"compress/gzip"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
+	"github.com/KontangoOSS/TangoKore/internal/util"
 )
 
 // downloadAndExtractTarGz downloads a .tar.gz and extracts a single named binary.
-// Pure Go — no curl, tar, or shell dependencies.
+// Delegates to shared util package.
 func downloadAndExtractTarGz(url, destDir, binaryName string) error {
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("download: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("download: HTTP %d", resp.StatusCode)
-	}
-
-	gz, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return fmt.Errorf("gzip: %w", err)
-	}
-	defer gz.Close()
-
-	tr := tar.NewReader(gz)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("tar: %w", err)
-		}
-		// Match the binary name (may be nested in a directory)
-		name := filepath.Base(hdr.Name)
-		if name == binaryName && hdr.Typeflag == tar.TypeReg {
-			outPath := filepath.Join(destDir, binaryName)
-			f, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-			if err != nil {
-				return fmt.Errorf("write: %w", err)
-			}
-			if _, err := io.Copy(f, tr); err != nil {
-				f.Close()
-				return fmt.Errorf("extract: %w", err)
-			}
-			f.Close()
-			return nil
-		}
-	}
-	return fmt.Errorf("%s not found in archive", binaryName)
+	return util.DownloadAndExtractTarGz(url, destDir, binaryName)
 }
 
 // downloadAndExtractZip downloads a .zip and extracts a single named binary.
-// Used for Windows installs.
+// Delegates to shared util package.
 func downloadAndExtractZip(url, destDir, binaryName string) error {
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("download: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("download: HTTP %d", resp.StatusCode)
-	}
-
-	// Zip requires random access — download to temp file
-	tmp, err := os.CreateTemp("", "kontango-dl-*.zip")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	defer tmp.Close()
-
-	if _, err := io.Copy(tmp, resp.Body); err != nil {
-		return fmt.Errorf("download: %w", err)
-	}
-
-	zr, err := zip.OpenReader(tmp.Name())
-	if err != nil {
-		return fmt.Errorf("zip: %w", err)
-	}
-	defer zr.Close()
-
-	for _, f := range zr.File {
-		name := filepath.Base(f.Name)
-		if strings.EqualFold(name, binaryName) && !f.FileInfo().IsDir() {
-			rc, err := f.Open()
-			if err != nil {
-				return err
-			}
-			outPath := filepath.Join(destDir, binaryName)
-			out, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-			if err != nil {
-				rc.Close()
-				return err
-			}
-			io.Copy(out, rc)
-			out.Close()
-			rc.Close()
-			return nil
-		}
-	}
-	return fmt.Errorf("%s not found in archive", binaryName)
+	return util.DownloadAndExtractZip(url, destDir, binaryName)
 }
 
 // downloadBinary downloads a raw binary from url and writes it to destPath with 0755.
+// Delegates to shared util package.
 func downloadBinary(url, destPath string) error {
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("download: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("download: HTTP %d", resp.StatusCode)
-	}
-
-	f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-	if err != nil {
-		return fmt.Errorf("create: %w", err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, resp.Body); err != nil {
-		os.Remove(destPath)
-		return fmt.Errorf("write: %w", err)
-	}
-	return nil
+	return util.DownloadBinary(url, destPath)
 }

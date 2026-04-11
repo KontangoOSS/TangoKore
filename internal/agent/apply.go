@@ -1,6 +1,9 @@
 package agent
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -200,32 +203,51 @@ func restartUnit(unit string) error {
 	return exec.CommandContext(ctx, "systemctl", "restart", unit+".service").Run()
 }
 
-// extractTarGz extracts a tar.gz archive into destDir.
+// extractTarGz extracts a tar.gz archive into destDir using pure Go (no shell-out).
 func extractTarGz(data []byte, destDir string) error {
 	os.MkdirAll(destDir, 0755)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "tar", "-xzf", "-", "-C", destDir)
-	cmd.Stdin = bytesReader(data)
-	return cmd.Run()
-}
-
-func bytesReader(data []byte) io.Reader {
-	return io.NewSectionReader(readerAt(data), 0, int64(len(data)))
-}
-
-type readerAt []byte
-
-func (r readerAt) ReadAt(p []byte, off int64) (int, error) {
-	if off >= int64(len(r)) {
-		return 0, io.EOF
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("gzip: %w", err)
 	}
-	n := copy(p, r[off:])
-	if n < len(p) {
-		return n, io.EOF
+	defer gz.Close()
+
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("tar: %w", err)
+		}
+
+		// Build target path
+		path := filepath.Join(destDir, hdr.Name)
+
+		// Create parent directories
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return fmt.Errorf("mkdir: %w", err)
+		}
+
+		// Extract based on file type
+		if hdr.Typeflag == tar.TypeDir {
+			if err := os.Mkdir(path, os.FileMode(hdr.Mode)); err != nil && !os.IsExist(err) {
+				return fmt.Errorf("mkdir: %w", err)
+			}
+		} else if hdr.Typeflag == tar.TypeReg {
+			f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(hdr.Mode))
+			if err != nil {
+				return fmt.Errorf("create: %w", err)
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				f.Close()
+				return fmt.Errorf("extract: %w", err)
+			}
+			f.Close()
+		}
 	}
-	return n, nil
 }
 
 // copyDir copies all files from src to dst, preserving directory structure.
