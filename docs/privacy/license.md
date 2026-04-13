@@ -49,7 +49,7 @@ The hardware fingerprint enables:
 
 ## 3. Where Data Goes
 
-### Option A: Public Enrollment (ctrl.example.com)
+### Option A: Public Enrollment (controller.example.com)
 
 If you enroll against the public Kontango controller:
 - **Data Recipient:** Kontango Infrastructure (Kontango OSS)
@@ -89,7 +89,7 @@ Why: Allows returning machines to be recognized and restore their
      passwords, API keys, or secrets are included.
 
 Privacy: If you run your own controller, only you see this data.
-         If using public ctrl.example.com, equivalent to a DNS lookup.
+         If using public controller.example.com, equivalent to a DNS lookup.
 ```
 
 ### Interactive (TUI) Mode
@@ -122,7 +122,7 @@ You have the right to:
 ## 6. Policy Links
 
 ### Privacy Policy
-For public enrollment (ctrl.example.com):
+For public enrollment (controller.example.com):
 - [example.com/privacy](https://example.com/privacy)
 - Details about data processing, retention, third parties
 
@@ -141,7 +141,7 @@ To run your own controller:
 ## 7. Legal Basis (Public Enrollment)
 
 ### Data Processing
-By enrolling against ctrl.example.com, you consent to:
+By enrolling against controller.example.com, you consent to:
 - Collection of hardware fingerprint data
 - Storage for machine identification and ACL management
 - Processing by Kontango operations team
@@ -153,7 +153,7 @@ If you are in a GDPR jurisdiction:
 - Right to deletion: request deletion of your machine record
 - Right to portability: export your machine identity certificate
 
-Contact: **privacy@example.com**
+Contact: **privacy@your-domain.com**
 
 ### Data Subject Rights (CCPA)
 If you are in California:
@@ -161,7 +161,7 @@ If you are in California:
 - Right to delete: request deletion of machine records
 - Right to opt-out: use private controller instead
 
-Contact: **privacy@example.com**
+Contact: **privacy@your-domain.com**
 
 ---
 
@@ -169,7 +169,7 @@ Contact: **privacy@example.com**
 
 ### Encryption in Transit
 All enrollment data is sent over **TLS 1.3** connections:
-- Public endpoint: `https://ctrl.example.com:443`
+- Public endpoint: `https://controller.example.com:443`
 - Hostname verification enabled
 - Certificate validation required
 
@@ -226,7 +226,7 @@ The machine can then:
 
 ## 11. Third Parties
 
-### Public Infrastructure (ctrl.example.com)
+### Public Infrastructure (controller.example.com)
 - **Cloud Provider:** DigitalOcean
 - **Database:** PostgreSQL (managed)
 - **Message Bus:** NATS (managed)
@@ -250,8 +250,8 @@ You choose all infrastructure providers.
 - Deleted data: purged from all backups within 30 days
 
 **Your Control:**
-- Request deletion anytime: **delete@example.com**
-- Request export anytime: **export@example.com**
+- Request deletion anytime: **delete@your-domain.com**
+- Request export anytime: **export@your-domain.com**
 - Disable future enrollment: contact support
 
 ### Self-Hosted
@@ -268,7 +268,7 @@ Your retention policy. You decide:
 The SDK does **not** knowingly collect data about children under 13.
 
 If you are running a school or youth program:
-- Contact **compliance@example.com**
+- Contact **compliance@your-domain.com**
 - We offer education-focused deployment options
 - Parental consent may be required
 
@@ -308,12 +308,12 @@ You agree to indemnify Kontango against:
 ## 16. Contact Us
 
 ### Privacy & Data Questions
-**Email:** privacy@example.com  
+**Email:** privacy@your-domain.com  
 **Portal:** example.com/contact
 
 ### Legal Requests (Law Enforcement)
 We respond to valid legal requests.  
-**Email:** legal@example.com
+**Email:** legal@your-domain.com
 
 ### Self-Hosting Support
 **Docs:** docs.example.com/self-hosted  
@@ -326,7 +326,7 @@ We respond to valid legal requests.
 By enrolling a machine with the Kontango SDK, you accept this ULA.
 
 ### For Public Enrollment
-Running `kontango enroll https://ctrl.example.com` means:
+Running `kontango enroll https://controller.example.com` means:
 - You accept this ULA
 - You understand the data being collected
 - You consent to Kontango processing that data
@@ -381,7 +381,7 @@ Your Infrastructure (Private Network)
 **A:** No. If you run your own controller, Kontango has zero access to your fingerprints. The controller software is open-source and runs entirely on your infrastructure.
 
 ### Q: What if I want to delete all my data from the public endpoint?
-**A:** Contact privacy@example.com with your machine IDs. We'll delete within 24 hours and remove from backups within 30 days.
+**A:** Contact privacy@your-domain.com with your machine IDs. We'll delete within 24 hours and remove from backups within 30 days.
 
 ### Q: Can I migrate from public to private?
 **A:** Yes. Export your machine's identity certificate and configure it to connect to your private controller. No additional enrollment needed.
@@ -396,4 +396,4 @@ Your Infrastructure (Private Network)
 
 **End of Universal License Agreement**
 
-*For questions or concerns, contact: legal@example.com*
+*For questions or concerns, contact: legal@your-domain.com*

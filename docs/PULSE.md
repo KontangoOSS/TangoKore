@@ -124,10 +124,10 @@ On the controller, app keys are stored prefixed: `myorg/myapp.status`, `myorg/my
 
 ```sh
 # All machines, all metrics
-curl https://ctrl.example.com/api/pulse/live
+curl https://controller.example.com/api/pulse/live
 
 # Specific machine
-curl https://ctrl.example.com/api/pulse/<machineID>
+curl https://controller.example.com/api/pulse/<machineID>
 ```
 
 ### From BrowZer (browser via Ziti overlay)

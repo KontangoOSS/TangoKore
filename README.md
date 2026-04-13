@@ -10,7 +10,7 @@ TangoKore is the easiest way to connect your machines securely. No passwords. No
 
 ```bash
 # That's it. Just run this one command:
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 Your machine is now on a secure network. Connected to everything it needs. Authenticated by being itself.
@@ -76,7 +76,7 @@ All code is public. MIT license. Read it. Audit it. Trust it.
 - Fast, simple, hosted by Kontango
 - Your data is encrypted, secure, deletable
 - GDPR/CCPA compliant
-- Email privacy@example.com anytime to delete
+- Email privacy@your-domain.com anytime to delete
 
 **Option 2: Run Your Own**
 - Your machine's data never leaves your network
@@ -94,7 +94,7 @@ We don't sell your data. We don't track you. We don't analyze your usage. Period
 ### Scenario 1: Your First Machine
 
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 Your machine enrolls with basic read-only access. Safe default.
@@ -104,7 +104,7 @@ Your machine enrolls with basic read-only access. Safe default.
 You deleted the certificate but your hardware is the same.
 
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 We recognize your hardware. You get your permissions back. No re-setup.
@@ -114,7 +114,7 @@ We recognize your hardware. You get your permissions back. No re-setup.
 Your admin pre-gave you credentials.
 
 ```bash
-curl https://ctrl.example.com/install | sudo sh --role-id xxx --secret-id yyy
+curl https://controller.example.com/install | sudo sh --role-id xxx --secret-id yyy
 ```
 
 You skip quarantine. You get full access immediately.
@@ -187,7 +187,7 @@ Why? So we can recognize your machine again and restore your settings.
 
 **You can always:**
 - See what's being sent (it's logged)
-- Delete your data from our system (email privacy@example.com)
+- Delete your data from our system (email privacy@your-domain.com)
 - Run your own server (data stays private)
 - Opt-out (don't run the installer)
 
@@ -201,7 +201,7 @@ MIT License. Use it anywhere. Modify it. Make it better.
 
 ## Questions?
 
-- **Privacy:** privacy@example.com
+- **Privacy:** privacy@your-domain.com
 - **Technical:** GitHub Issues
 - **General:** example.com
 
@@ -210,7 +210,7 @@ MIT License. Use it anywhere. Modify it. Make it better.
 **One command. Your machine is secure.**
 
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 That's all you need.

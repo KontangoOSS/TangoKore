@@ -290,7 +290,7 @@ Technical Documentation:
 ### Path 4: "I just want to get started"
 1. [README.md](README.md) — Quick Start
 2. [MIRANDA_RIGHTS.md](MIRANDA_RIGHTS.md) — What gets collected (5 min read)
-3. Run: `kontango enroll https://ctrl.example.com`
+3. Run: `kontango enroll https://controller.example.com`
 
 ---
 
@@ -338,7 +338,7 @@ A: Read [SCHMUTZ_PHILOSOPHY.md](SCHMUTZ_PHILOSOPHY.md) to understand why it's mo
 A: Yes. See [ULA.md](ULA.md) Section 17-18 and [PRIVACY.md](PRIVACY.md).
 
 **Q: Can I delete my data?**  
-A: Yes. Email privacy@example.com. See [PRIVACY.md](PRIVACY.md).
+A: Yes. Email privacy@your-domain.com. See [PRIVACY.md](PRIVACY.md).
 
 **Q: Can I migrate to a different controller?**  
 A: Yes. Export your identity and re-enroll. See [PRIVACY.md](PRIVACY.md).
@@ -350,9 +350,9 @@ A: Fingerprints can't be guessed, stolen, rotated, or forgotten. Trust grows aut
 
 ## 📞 Support & Contact
 
-**Privacy Questions:** privacy@example.com  
-**Data Deletion Requests:** privacy@example.com (title: "DATA DELETION REQUEST")  
-**Legal/Compliance Requests:** legal@example.com  
+**Privacy Questions:** privacy@your-domain.com  
+**Data Deletion Requests:** privacy@your-domain.com (title: "DATA DELETION REQUEST")  
+**Legal/Compliance Requests:** legal@your-domain.com  
 **Community/Technical:** github.com/KontangoOSS/TangoKore/discussions
 
 ---

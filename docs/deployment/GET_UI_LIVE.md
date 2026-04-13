@@ -17,14 +17,14 @@
 - Controllers are NOT serving the UI to users ❌
 
 ### Desired State
-1. User visits `https://ctrl.example.com/` → sees enrollment web UI
+1. User visits `https://controller.example.com/` → sees enrollment web UI
 2. User can select skill level (simple vs advanced)
 3. User fills out preferences
 4. User gets download link for installer script
 5. OR user clicks button to get `curl` command
 
 ```
-https://ctrl.example.com/
+https://controller.example.com/
     ↓
 [Skill Selection]
     ↓
@@ -34,7 +34,7 @@ https://ctrl.example.com/
     ↓
 [Download Installer] OR [Copy curl Command]
     ↓
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 ---
@@ -195,19 +195,19 @@ curl http://localhost:8080/ | grep -c "Welcome to TangoKore"
 
 ```bash
 # Test public endpoint
-curl https://ctrl.example.com/ | grep -c "Welcome to TangoKore"
+curl https://controller.example.com/ | grep -c "Welcome to TangoKore"
 # Should output: 1
 
 # Test installer endpoint
-curl https://ctrl.example.com/install | head -3
+curl https://controller.example.com/install | head -3
 # Should return: #!/bin/bash
 
 # Test CSS loads
-curl https://ctrl.example.com/css/style.css | head -5
+curl https://controller.example.com/css/style.css | head -5
 # Should return: CSS content
 
 # Test JavaScript loads
-curl https://ctrl.example.com/js/main.js | head -5
+curl https://controller.example.com/js/main.js | head -5
 # Should return: JavaScript content
 ```
 
@@ -219,19 +219,19 @@ curl https://ctrl.example.com/js/main.js | head -5
 
 ```bash
 # 1. Visit web UI
-curl https://ctrl.example.com/ | head -20
+curl https://controller.example.com/ | head -20
 # Should see HTML with "Welcome to TangoKore"
 
 # 2. Get installer script
-curl https://ctrl.example.com/install | head -10
+curl https://controller.example.com/install | head -10
 # Should return:
 # #!/bin/bash
-# export BASE_URL="https://ctrl.example.com"
+# export BASE_URL="https://controller.example.com"
 # export SESSION_TOKEN="sess_..."
 # kontango enroll $BASE_URL --session $SESSION_TOKEN --no-tui
 
 # 3. Run installer (on test machine)
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 
 # 4. Check status
 kontango status
@@ -240,7 +240,7 @@ kontango status
 
 ### Visual Test in Browser
 
-1. **Open** `https://ctrl.example.com/`
+1. **Open** `https://controller.example.com/`
 2. **See** skill-level selection (👤 Simple vs ⚙️ Advanced)
 3. **Click** "Just Get Me Connected"
 4. **Fill in** machine name (or leave empty)
@@ -292,7 +292,7 @@ curl http://localhost:8080/join | grep "Tango"
 - [ ] Test locally (curl http://localhost)
 
 ### After Deployment
-- [ ] Test public endpoint (`https://ctrl.example.com/`)
+- [ ] Test public endpoint (`https://controller.example.com/`)
 - [ ] HTML loads
 - [ ] CSS loads
 - [ ] JavaScript loads
@@ -307,13 +307,13 @@ curl http://localhost:8080/join | grep "Tango"
 
 ## Success Criteria
 
-✅ `https://ctrl.example.com/` returns HTML (enrollment UI)  
+✅ `https://controller.example.com/` returns HTML (enrollment UI)  
 ✅ Skill-level selection visible and functional  
 ✅ Simple flow works end-to-end  
 ✅ Advanced flow works end-to-end  
 ✅ Both flows produce identical payloads  
 ✅ CSS and JS load without errors  
-✅ `https://ctrl.example.com/install` returns shell script  
+✅ `https://controller.example.com/install` returns shell script  
 ✅ Users can run `curl ... | sudo sh` and enroll  
 ✅ Enrolled machines appear with correct stage level  
 ✅ All 3 controllers serving same UI  
@@ -355,7 +355,7 @@ Once UI is live on all controllers:
 ## The Complete Flow Then
 
 ```
-User visits ctrl.example.com
+User visits controller.example.com
     ↓
 Sees enrollment UI (web)
     ↓
@@ -364,7 +364,7 @@ Advanced: Reviews exact payload + toggles fields
     ↓
 Gets installer command or download link
     ↓
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
     ↓
 SDK shows disclosure, collects fingerprint
     ↓

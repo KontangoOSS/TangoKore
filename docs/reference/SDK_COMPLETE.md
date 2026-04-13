@@ -63,7 +63,7 @@ REQUIRED = Operating System + CPU Architecture + Machine Identifier
 
 ### Enrollment Flow (Automatic)
 ```
-1. kontango enroll https://ctrl.example.com
+1. kontango enroll https://controller.example.com
       ↓
 2. SDK automatically collects:
    - OS (e.g., "linux")
@@ -110,7 +110,7 @@ Server decides based on **what it receives**, not what the client claims.
 ### Core Principle
 **"Your data, your control."**
 
-### Public Enrollment (ctrl.example.com)
+### Public Enrollment (controller.example.com)
 - Fingerprints sent to Kontango infrastructure
 - GDPR/CCPA compliant
 - Users can request deletion anytime
@@ -137,7 +137,7 @@ Server decides based on **what it receives**, not what the client claims.
 
 ### Non-Interactive Path
 ```bash
-$ kontango enroll https://ctrl.example.com --no-tui
+$ kontango enroll https://controller.example.com --no-tui
 
 ═══════════════════════════════════════════════════════════════
 KONTANGO SDK DISCLOSURE
@@ -211,13 +211,13 @@ type MinimalFingerprint struct {
 ### Zero User Input Required
 ```bash
 # Just run it. Everything is automatic.
-kontango enroll https://ctrl.example.com
+kontango enroll https://controller.example.com
 
 # Or with one flag to enable TUI
-kontango enroll https://ctrl.example.com
+kontango enroll https://controller.example.com
 
 # Or with optional enhancements
-kontango enroll https://ctrl.example.com --role-id foo --secret-id bar
+kontango enroll https://controller.example.com --role-id foo --secret-id bar
 ```
 
 ---
@@ -289,7 +289,7 @@ These are all **architecturally positioned** (subcommands exist, flags parse) bu
 ✅ Transparent data collection  
 ✅ Minimal required data  
 ✅ User control over additional data  
-✅ Right to deletion (privacy@example.com)  
+✅ Right to deletion (privacy@your-domain.com)  
 ✅ Right to access/portability  
 ✅ DPA available for public enrollment  
 
@@ -416,7 +416,7 @@ Source Code:
 ### For Users
 1. Read the README (Privacy & Compliance section)
 2. Optional: Read MIRANDA_RIGHTS.md to understand required vs. optional
-3. Run: `kontango enroll https://ctrl.example.com`
+3. Run: `kontango enroll https://controller.example.com`
 4. That's it. You're on the mesh.
 
 ### For Operators

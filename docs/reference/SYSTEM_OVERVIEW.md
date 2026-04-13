@@ -13,7 +13,7 @@ TangoKore is the **complete zero-trust machine enrollment system**. It's not jus
 All of these components work together to let machines join a secure mesh network with one command:
 
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 ---
@@ -32,10 +32,10 @@ curl https://ctrl.example.com/install | sudo sh
 **Where users interact:**
 ```bash
 # Install via one-liner
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 
 # Or via web interface
-https://ctrl.example.com/
+https://controller.example.com/
 ```
 
 **What's inside:**
@@ -92,7 +92,7 @@ Caddy (SSL/routing) → schmutz-controller (API + UI) → OpenBao (secrets) + Zi
 
 User runs one command:
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 This connects to the **load-balanced join endpoint** (round-robin across ctrl-1, ctrl-2, ctrl-3).
@@ -112,7 +112,7 @@ Controller's `/install` endpoint:
 
 The installer script runs:
 ```bash
-kontango enroll https://ctrl.example.com \
+kontango enroll https://controller.example.com \
   --session <session_token> \
   --no-tui
 ```
@@ -143,7 +143,7 @@ Machine can:
 
 ### Option 1: Web Interface (Easiest)
 
-Visit: `https://ctrl.example.com/`
+Visit: `https://controller.example.com/`
 
 **Served by:** 
 - Option A: schmutz-controller at `frontend/` (embedded, convenient)
@@ -162,7 +162,7 @@ User chooses:
 ### Option 2: CLI Installer (Fastest)
 
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 **Served by:** schmutz-controller `/install` endpoint  
@@ -172,7 +172,7 @@ curl https://ctrl.example.com/install | sudo sh
 ### Option 3: CLI TUI (Most Interactive)
 
 ```bash
-kontango enroll https://ctrl.example.com
+kontango enroll https://controller.example.com
 ```
 
 **Flow:** Interactive dialogs  
@@ -249,7 +249,7 @@ Stage 3: ADMIN (Pre-Provisioned/Proven)
 - No gatekeeping or intimidation
 
 ### "Every Controller Is a Doorway"
-- Whether user joins via public (`ctrl.example.com`) or private server
+- Whether user joins via public (`controller.example.com`) or private server
 - They get the same quality experience
 - Same decision tree, same trust model
 
@@ -264,7 +264,7 @@ TangoKore/
 ├── ARCHITECTURE_CLARIFICATION.md - How pieces fit together
 ├── PROJECT_STATUS.md             - Current implementation status
 ├── CURRENT_STATUS.md             - Snapshot of what's done
-├── DEPLOY_JOIN_ENDPOINT.md      - How to get ctrl.example.com working
+├── DEPLOY_JOIN_ENDPOINT.md      - How to get controller.example.com working
 │
 ├── cmd/kontango/                 - CLI implementation
 │   ├── enroll.go                - Enrollment command
@@ -314,16 +314,16 @@ TangoKore/
 ### For End Users
 ```bash
 # One command to join
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 
 # Or use web interface
-https://ctrl.example.com/
+https://controller.example.com/
 ```
 
 ### For Operators
 1. Deploy controller (schmutz-controller) on your infrastructure
 2. Point DNS to your controller
-3. Users join via your controller instead of public `ctrl.example.com`
+3. Users join via your controller instead of public `controller.example.com`
 4. Same experience, total privacy (data stays on your network)
 
 ### For Developers
@@ -362,7 +362,7 @@ https://ctrl.example.com/
 ## What's Next
 
 **Immediate (This Week):**
-1. Diagnose why `ctrl.example.com` is offline
+1. Diagnose why `controller.example.com` is offline
 2. Restore schmutz-controller service
 3. Integrate new web UI (from TangoKore/web/public/)
 

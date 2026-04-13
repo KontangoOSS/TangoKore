@@ -421,17 +421,17 @@ Every issued identity includes:
 
 ## Testing Against Real Controller
 
-To test against the actual Kontango controller at `ctrl.example.com`:
+To test against the actual Kontango controller at `controller.example.com`:
 
 ```bash
 # Enroll as new machine
-./build/kontango enroll https://ctrl.example.com:1280 --no-tui
+./build/kontango enroll https://controller.example.com:1280 --no-tui
 
 # Re-enroll known machine
-./build/kontango enroll https://ctrl.example.com:1280 --scan --no-tui
+./build/kontango enroll https://controller.example.com:1280 --scan --no-tui
 
 # Enroll with AppRole (pre-provisioned)
-./build/kontango enroll https://ctrl.example.com:1280 \
+./build/kontango enroll https://controller.example.com:1280 \
   --role-id YOUR_ROLE_ID \
   --secret-id YOUR_SECRET_ID \
   --no-tui

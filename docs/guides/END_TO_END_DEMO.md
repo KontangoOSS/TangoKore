@@ -172,19 +172,19 @@ Both produce identical machine enrollment with identical trust level assignment.
 
 **Step 1: Download Installer**
 ```bash
-curl https://ctrl.example.com/install | head -3
+curl https://controller.example.com/install | head -3
 ```
 
 Returns:
 ```bash
 #!/bin/bash
-export BASE_URL="https://ctrl.example.com"
+export BASE_URL="https://controller.example.com"
 export SESSION_TOKEN="sess_a1b2c3d4e5f6g7h8"
 ```
 
 **Step 2: Run Installer**
 ```bash
-curl https://ctrl.example.com/install | sudo sh
+curl https://controller.example.com/install | sudo sh
 ```
 
 What happens:
@@ -244,10 +244,10 @@ make build
 
 ```bash
 # Test installer script
-curl -k https://ctrl.example.com/install | head -10
+curl -k https://controller.example.com/install | head -10
 
 # Run full installation
-curl -k https://ctrl.example.com/install | sudo sh
+curl -k https://controller.example.com/install | sudo sh
 
 # Check status
 kontango status
@@ -338,8 +338,8 @@ curl http://localhost:8000/ | grep -c "Welcome to TangoKore"
 
 Everything cascades:
 
-1. **Web** — Users visit `https://ctrl.example.com/` → see new UI
-2. **Installer** — `curl https://ctrl.example.com/install | sh` works
+1. **Web** — Users visit `https://controller.example.com/` → see new UI
+2. **Installer** — `curl https://controller.example.com/install | sh` works
 3. **CLI** — `kontango enroll` connects to controller
 4. **Complete** — Full enrollment flow works end-to-end
 
@@ -365,7 +365,7 @@ http://localhost:8000/
 ## Next: Get This Online
 
 1. **Diagnose join endpoint** — Why is it offline?
-2. **Restore service** — Get `https://ctrl.example.com/` responding
+2. **Restore service** — Get `https://controller.example.com/` responding
 3. **Integrate web UI** — Copy files to controller
 4. **Test end-to-end** — Users can enroll via web, CLI, or both
 

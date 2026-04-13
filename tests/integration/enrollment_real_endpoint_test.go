@@ -21,10 +21,10 @@ func TestE2E_RealEndpoint_Announcement(t *testing.T) {
 
 	log.Printf("\n╔════════════════════════════════════════════════════════════════╗")
 	log.Printf("║                 REAL ENDPOINT TEST                             ║")
-	log.Printf("║          Enrolling against ctrl.example.com                   ║")
+	log.Printf("║          Enrolling against controller.example.com                   ║")
 	log.Printf("╚════════════════════════════════════════════════════════════════╝\n")
 
-	controllerURL := "https://ctrl.example.com:1280"
+	controllerURL := "https://controller.example.com:1280"
 
 	log.Printf("═══════════════════════════════════════════════════════════════════")
 	log.Printf("MACHINE ANNOUNCEMENT PAYLOAD")
@@ -206,7 +206,7 @@ func TestE2E_RealEndpoint_Announcement(t *testing.T) {
 
 	log.Printf("Your privacy:")
 	log.Printf("  ✓ Running private controller? Only YOU see fingerprints")
-	log.Printf("  ✓ Using public ctrl.example.com? Same as DNS lookup")
+	log.Printf("  ✓ Using public controller.example.com? Same as DNS lookup")
 	log.Printf("  ✓ No passwords, keys, or secrets in fingerprint")
 	log.Printf("  ✓ All within your control")
 	log.Printf("")

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The join webpage (`web/public/`) provides a web-based enrollment interface that mirrors the SDK's decision tree. It's meant to run at `ctrl.example.com` or any HTTP server.
+The join webpage (`web/public/`) provides a web-based enrollment interface that mirrors the SDK's decision tree. It's meant to run at `controller.example.com` or any HTTP server.
 
 **Philosophy:** Your path is what you choose. Same decision tree, different UI.
 

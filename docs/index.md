@@ -60,7 +60,7 @@ Machines progress through trust levels:
 ### The One-Command Flow
 
 ```
-User runs:  curl https://ctrl.example.com/install | sudo sh
+User runs:  curl https://controller.example.com/install | sudo sh
            ↓
 Controller: Fingerprints connection, generates session token, serves installer
            ↓
@@ -98,7 +98,7 @@ This is **all public information** that `uname -a` or similar commands show.
 
 ### Your Privacy Control
 
-**Using our public server:** Your data is encrypted, secure, and deletable anytime (email privacy@example.com)
+**Using our public server:** Your data is encrypted, secure, and deletable anytime (email privacy@your-domain.com)
 
 **Running your own server:** Your data never leaves your network. You control everything.
 
@@ -142,7 +142,7 @@ A: No. We don't collect usage metrics, analytics, or behavior data beyond what's
 
 ## Still Have Questions?
 
-- **Privacy questions:** privacy@example.com
+- **Privacy questions:** privacy@your-domain.com
 - **Technical issues:** [GitHub Issues](https://github.com/KontangoOSS/TangoKore/issues)
 - **General info:** [example.com](https://example.com)
 

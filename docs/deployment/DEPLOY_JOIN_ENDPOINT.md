@@ -1,13 +1,13 @@
 # Deploying Join Endpoint
 
 **Status:** ⚠️ Join endpoint currently offline  
-**Impact:** Users cannot run `curl https://ctrl.example.com/install | sudo sh`
+**Impact:** Users cannot run `curl https://controller.example.com/install | sudo sh`
 
 ## What Needs to Happen
 
 The join endpoint should:
-1. **Serve installer script** at `https://ctrl.example.com/install`
-2. **Serve join webpage** at `https://ctrl.example.com/`
+1. **Serve installer script** at `https://controller.example.com/install`
+2. **Serve join webpage** at `https://controller.example.com/`
 3. **Generate session tokens** for installations
 4. **Accept SSE enrollments** at `POST /api/enroll/stream`
 
@@ -78,7 +78,7 @@ systemctl status caddy
 journalctl -u caddy -n 50
 
 # Verify routes to tango-controller
-curl -k https://ctrl.example.com/ -v  # Check headers for routing
+curl -k https://controller.example.com/ -v  # Check headers for routing
 ```
 
 ### 3. Restore Service
@@ -92,7 +92,7 @@ curl -k https://localhost/install | head -3
 # Should return: #!/bin/bash
 
 # Test publicly
-curl -k https://ctrl.example.com/install | head -3
+curl -k https://controller.example.com/install | head -3
 ```
 
 ### 2. Configure Join Endpoint
@@ -122,18 +122,18 @@ Option B: **Separate service**
 
 ### 4. SSL/TLS Configuration
 
-- Certificate: Must cover `ctrl.example.com`
+- Certificate: Must cover `controller.example.com`
 - Currently: Likely have wildcard for `.example.com`
 - Issue: Confirm cert is valid and installed
 
 ```bash
 # Check certificate on controller
-openssl s_client -connect ctrl.example.com:443
+openssl s_client -connect controller.example.com:443
 ```
 
 ### 5. DNS Configuration
 
-- **Hostname:** `ctrl.example.com`
+- **Hostname:** `controller.example.com`
 - **Type:** A record (round-robin across 3 controllers)
 - **IPs:** Your controller IPs (round-robin A records)
 - Status: Verify DNS resolution
@@ -142,10 +142,10 @@ openssl s_client -connect ctrl.example.com:443
 
 ```bash
 # Web interface
-curl https://ctrl.example.com/
+curl https://controller.example.com/
 
 # Installer endpoint
-curl https://ctrl.example.com/install | head -10
+curl https://controller.example.com/install | head -10
 
 # Should return: #!/bin/bash with BASE_URL and SESSION_TOKEN
 ```
@@ -167,8 +167,8 @@ curl https://ctrl.example.com/install | head -10
 
 ## Success Criteria
 
-✅ `curl https://ctrl.example.com/install` returns shell script  
-✅ `curl https://ctrl.example.com/` returns join webpage HTML  
+✅ `curl https://controller.example.com/install` returns shell script  
+✅ `curl https://controller.example.com/` returns join webpage HTML  
 ✅ Users can complete enrollment via web or CLI  
 ✅ New machines receive correct identity and config  
 

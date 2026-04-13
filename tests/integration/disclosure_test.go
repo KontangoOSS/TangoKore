@@ -12,7 +12,7 @@ import (
 // that appears when using kontango enroll via non-interactive path (script/pipe).
 //
 // This test shows what a user sees at the terminal when they run:
-//   kontango enroll https://ctrl.example.com --no-tui
+//   kontango enroll https://controller.example.com --no-tui
 //
 // Expected output: Clear, upfront disclosure about what data will be sent.
 func TestDisclosure_NonInteractive(t *testing.T) {
@@ -23,7 +23,7 @@ func TestDisclosure_NonInteractive(t *testing.T) {
 	log.Printf("\n╔════════════════════════════════════════════════════════════════╗")
 	log.Printf("║              NON-INTERACTIVE ENROLLMENT                        ║")
 	log.Printf("║          (This is what users see when they run)                ║")
-	log.Printf("║    kontango enroll https://ctrl.example.com --no-tui          ║")
+	log.Printf("║    kontango enroll https://controller.example.com --no-tui          ║")
 	log.Printf("╚════════════════════════════════════════════════════════════════╝\n")
 
 	// Show what gets logged at enrollment start
@@ -41,7 +41,7 @@ func TestDisclosure_NonInteractive(t *testing.T) {
 	log.Printf("passwords, API keys, or secrets are included.\n")
 	log.Printf("\n")
 	log.Printf("Privacy: If you run your own controller, only you see this data.\n")
-	log.Printf("If using public ctrl.example.com, equivalent to a DNS lookup.\n")
+	log.Printf("If using public controller.example.com, equivalent to a DNS lookup.\n")
 	log.Printf("\n")
 	log.Printf("═══════════════════════════════════════════════════════════════\n")
 	log.Printf("\n")
@@ -72,7 +72,7 @@ func TestDisclosure_NonInteractive(t *testing.T) {
 // in the TUI enrollment wizard's confirm step.
 //
 // This test shows what a user sees when they run:
-//   kontango enroll https://ctrl.example.com
+//   kontango enroll https://controller.example.com
 //
 // At the confirm step, before pressing "y" to enroll, users see their collected
 // data with an explanation of why it's being collected.
@@ -84,7 +84,7 @@ func TestDisclosure_TUI(t *testing.T) {
 	log.Printf("\n╔════════════════════════════════════════════════════════════════╗")
 	log.Printf("║                  TUI ENROLLMENT                              ║")
 	log.Printf("║         (This is what users see when they run)               ║")
-	log.Printf("║         kontango enroll https://ctrl.example.com            ║")
+	log.Printf("║         kontango enroll https://controller.example.com            ║")
 	log.Printf("║                    [INTERACTIVE MODE]                        ║")
 	log.Printf("╚════════════════════════════════════════════════════════════════╝\n")
 

@@ -328,7 +328,7 @@ Try all three! The payload changes each time but the enrollment process is the s
 
 ## When Real Endpoints Are Online
 
-Once `ctrl.example.com` is restored and the controller is running:
+Once `controller.example.com` is restored and the controller is running:
 
 ### The Web UI Will:
 1. POST payload to `/api/enroll/stream`

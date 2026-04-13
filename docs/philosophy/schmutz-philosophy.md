@@ -23,7 +23,7 @@ In Schmutz/TangoKore:
 
 ### First Enrollment (Clean Slate)
 
-Machine A enrolls against ctrl.example.com for the first time.
+Machine A enrolls against controller.example.com for the first time.
 
 ```
 Client sends:
@@ -299,7 +299,7 @@ We trust this identity implicitly. Full access."
 
 ### Week 1: New Machine
 ```bash
-$ kontango enroll https://ctrl.example.com --no-tui
+$ kontango enroll https://controller.example.com --no-tui
 
 Minimal fingerprint sent:
   OS: linux
@@ -316,7 +316,7 @@ User cannot: Write to services, escalate privileges
 
 ### Week 2: Same Machine, More Info
 ```bash
-$ kontango enroll https://ctrl.example.com --no-tui
+$ kontango enroll https://controller.example.com --no-tui
 
 Enhanced fingerprint sent:
   OS: linux (same)
@@ -335,7 +335,7 @@ User cannot: Deploy new services, modify other machines' ACLs
 
 ### Week 4: Proven Consistency, Pre-Provisioned Creds
 ```bash
-$ kontango enroll https://ctrl.example.com \
+$ kontango enroll https://controller.example.com \
   --role-id vault-role-123 \
   --secret-id vault-secret-456
 

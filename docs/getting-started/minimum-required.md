@@ -72,7 +72,7 @@ If you want to opt-in to additional data collection for faster authentication or
 
 ### Scenario 1: Minimum Enrollment (Nothing Optional)
 ```bash
-kontango enroll https://ctrl.example.com --no-tui
+kontango enroll https://controller.example.com --no-tui
 ```
 
 What gets sent:
@@ -88,7 +88,7 @@ What gets sent:
 
 ### Scenario 2: Enhanced Enrollment (With Opt-In Details)
 ```bash
-kontango enroll https://ctrl.example.com \
+kontango enroll https://controller.example.com \
   --hostname "my-server" \
   --role-id "$VAULT_ROLE_ID" \
   --secret-id "$VAULT_SECRET_ID"
@@ -119,7 +119,7 @@ What gets sent:
 
 ### Scenario 3: Returning Machine (Fingerprint Match)
 ```bash
-kontango enroll https://ctrl.example.com --scan
+kontango enroll https://controller.example.com --scan
 ```
 
 SDK collects full fingerprint, server recognizes the hardware hash.
@@ -162,7 +162,7 @@ Just like Miranda Rights are non-negotiable, these are your rights:
 2. **Right to Decline:** Provide just the minimum, no optional data
 3. **Right to Control:** Choose your own identifier if you don't like the auto-issued one
 4. **Right to Privacy:** Run your own controller and keep all data private
-5. **Right to Delete:** Request deletion from Kontango anytime (email privacy@example.com)
+5. **Right to Delete:** Request deletion from Kontango anytime (email privacy@your-domain.com)
 6. **Right to Export:** Get your machine identity and certificates anytime
 7. **Right to Migrate:** Move to a different controller without penalty
 

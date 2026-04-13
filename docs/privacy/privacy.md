@@ -11,7 +11,7 @@
 | **What data is collected?** | Machine fingerprints: hostname, CPU, memory, network MACs, OS version |
 | **Who sees it?** | Public: Kontango. Private: only you (if self-hosted) |
 | **Can I avoid it?** | Run your own controller—fingerprints stay private |
-| **Can I delete it?** | Yes—contact privacy@example.com or delete from your controller |
+| **Can I delete it?** | Yes—contact privacy@your-domain.com or delete from your controller |
 | **Is it encrypted?** | Yes—TLS in transit, AES-256 at rest (public) |
 | **Can you sell it?** | No—Kontango never monetizes machine data |
 | **Full terms?** | See [ULA.md](ULA.md) |
@@ -20,7 +20,7 @@
 
 ## Three Scenarios
 
-### 1. Using Public Enrollment (ctrl.example.com)
+### 1. Using Public Enrollment (controller.example.com)
 ```
 Your Machine          Kontango Controller
      │                       │
@@ -39,7 +39,7 @@ Kontango's Policy:
 - ✓ See disclosure before enrollment
 - ✓ Abort by pressing 'n' in TUI
 - ✓ Export machine certificate
-- ✓ Delete record anytime (email privacy@example.com)
+- ✓ Delete record anytime (email privacy@your-domain.com)
 - ✓ Migrate to private controller
 
 ### 2. Running Your Own Controller
@@ -94,13 +94,13 @@ Some machines to Public     Some machines to Private
 - **Right to Delete:** Request deletion anytime
 - **Right to Portability:** Export your machine identity
 - **Right to Correction:** Update hostname or other identifiers
-- **Contact:** privacy@example.com
+- **Contact:** privacy@your-domain.com
 
 **CCPA (California)**
 - **Right to Know:** What data Kontango collects
 - **Right to Delete:** Request deletion
 - **Right to Opt-Out:** Stop future data collection
-- **Contact:** privacy@example.com
+- **Contact:** privacy@your-domain.com
 
 **Response Time:** 24 hours for deletion requests, 5 business days for complex requests
 
@@ -162,7 +162,7 @@ Your choice:
 
 **Non-interactive:**
 ```
-kontango enroll https://ctrl.example.com --no-tui
+kontango enroll https://controller.example.com --no-tui
     ↓
 Shows FINGERPRINTING DISCLOSURE banner
     ↓
@@ -173,7 +173,7 @@ Explains why and privacy controls
 
 **Interactive (TUI):**
 ```
-kontango enroll https://ctrl.example.com
+kontango enroll https://controller.example.com
     ↓
 Shows method selection
     ↓
@@ -208,7 +208,7 @@ Self-hosted enrollment—all logs in your database.
 
 ### Requesting Deletion (Public Enrollment)
 
-**Email:** privacy@example.com
+**Email:** privacy@your-domain.com
 **Include:**
 - Your machine hostname(s) or ID(s)
 - Date(s) of enrollment (if available)
@@ -255,7 +255,7 @@ kontango config set controller=https://your-controller.internal
 kontango enroll https://your-controller.internal --identity machine-identity.p12
 
 # 5. Request deletion from public endpoint
-# Contact privacy@example.com
+# Contact privacy@your-domain.com
 ```
 
 Fingerprints no longer sent to Kontango after this.
@@ -310,15 +310,15 @@ If you use public enrollment, your fingerprints are processed by:
 ## Questions & Support
 
 ### Privacy Questions
-**Email:** privacy@example.com  
+**Email:** privacy@your-domain.com  
 **Response Time:** 24 hours
 
 ### Data Deletion Requests
-**Email:** privacy@example.com (title: "DATA DELETION REQUEST")  
+**Email:** privacy@your-domain.com (title: "DATA DELETION REQUEST")  
 **Response Time:** 24 hours for deletion, 5 days for confirmation
 
 ### Legal/Compliance Requests
-**Email:** legal@example.com
+**Email:** legal@your-domain.com
 
 ### Technical Support
 **Self-Hosted:** docs.example.com/self-hosted  

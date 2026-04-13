@@ -12,7 +12,7 @@ type Config struct {
 	// Node identity
 	Name          string // e.g. "ctrl-1"
 	Domain        string // e.g. "example.com"
-	JoinDomain    string // e.g. "ctrl.example.com"
+	JoinDomain    string // e.g. "controller.example.com"
 	OverlayDomain string // e.g. "tango"
 
 	// Mode
