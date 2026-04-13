@@ -45,7 +45,7 @@ func TestConfigLookup(t *testing.T) {
 			statusCode: 200,
 			configBody: &AppConfig{
 				Enabled:         true,
-				Backend:         "10.11.30.26:8080",
+				Backend:         "192.0.2.10:8080",
 				BackendProtocol: "http",
 				ServiceName:     "code-server",
 				RequiresAuth:    true,
@@ -212,7 +212,7 @@ func TestRoutingDecision(t *testing.T) {
 			name: "enabled config",
 			config: &AppConfig{
 				Enabled: true,
-				Backend: "10.11.30.26:8080",
+				Backend: "192.0.2.10:8080",
 			},
 			expectRouting:  "backend",
 			expectedReason: "config found and enabled",
@@ -221,7 +221,7 @@ func TestRoutingDecision(t *testing.T) {
 			name: "disabled config",
 			config: &AppConfig{
 				Enabled: false,
-				Backend: "10.11.30.26:8080",
+				Backend: "192.0.2.10:8080",
 			},
 			expectRouting:  "honeypot",
 			expectedReason: "app is disabled",
@@ -292,7 +292,7 @@ func TestFullRoutingFlow(t *testing.T) {
 				}{
 					Data: AppConfig{
 						Enabled:      true,
-						Backend:      "10.11.30.26:8080",
+						Backend:      "192.0.2.10:8080",
 						ServiceName:  "code-server",
 						RequiresAuth: true,
 						ACLTiers:     []string{"@code-server-hosts"},
@@ -339,7 +339,7 @@ func TestFullRoutingFlow(t *testing.T) {
 func TestConfigSchema(t *testing.T) {
 	validJSON := `{
 		"enabled": true,
-		"backend": "10.11.30.26:8080",
+		"backend": "192.0.2.10:8080",
 		"backend_protocol": "http",
 		"tls_termination": "caddy",
 		"service_name": "code-server",
@@ -404,7 +404,7 @@ func BenchmarkConfigLookup(b *testing.B) {
 			}{
 				Data: AppConfig{
 					Enabled:     true,
-					Backend:     "10.11.30.26:8080",
+					Backend:     "192.0.2.10:8080",
 					ServiceName: "test",
 				},
 			},

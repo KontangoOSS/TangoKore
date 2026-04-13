@@ -25,7 +25,7 @@ func TestConfigLookup(t *testing.T) {
 			statusCode: 200,
 			configBody: &AppConfig{
 				Enabled:         true,
-				Backend:         "10.11.30.26:8080",
+				Backend:         "192.0.2.10:8080",
 				BackendProtocol: "http",
 				ServiceName:     "code-server",
 				RequiresAuth:    true,
@@ -185,19 +185,19 @@ func TestRoutingDecision(t *testing.T) {
 			name: "enabled, auth required, acl matches",
 			config: &AppConfig{
 				Enabled:      true,
-				Backend:      "10.11.30.26:8080",
+				Backend:      "192.0.2.10:8080",
 				RequiresAuth: true,
 				ACLTiers:     []string{"@code-server-hosts"},
 			},
 			clientAttrs:     "@code-server-hosts",
 			shouldRoute:     true,
-			expectedBackend: "10.11.30.26:8080",
+			expectedBackend: "192.0.2.10:8080",
 		},
 		{
 			name: "enabled, auth required, acl fails",
 			config: &AppConfig{
 				Enabled:      true,
-				Backend:      "10.11.30.26:8080",
+				Backend:      "192.0.2.10:8080",
 				RequiresAuth: true,
 				ACLTiers:     []string{"@admin"},
 			},
@@ -209,7 +209,7 @@ func TestRoutingDecision(t *testing.T) {
 			name: "disabled",
 			config: &AppConfig{
 				Enabled:      false,
-				Backend:      "10.11.30.26:8080",
+				Backend:      "192.0.2.10:8080",
 				RequiresAuth: false,
 			},
 			shouldRoute:     false,
@@ -219,11 +219,11 @@ func TestRoutingDecision(t *testing.T) {
 			name: "no auth required",
 			config: &AppConfig{
 				Enabled:      true,
-				Backend:      "10.11.30.26:8080",
+				Backend:      "192.0.2.10:8080",
 				RequiresAuth: false,
 			},
 			shouldRoute:     true,
-			expectedBackend: "10.11.30.26:8080",
+			expectedBackend: "192.0.2.10:8080",
 		},
 	}
 
@@ -263,7 +263,7 @@ func TestConfigSchema(t *testing.T) {
 	// Valid config
 	validJSON := `{
 		"enabled": true,
-		"backend": "10.11.30.26:8080",
+		"backend": "192.0.2.10:8080",
 		"backend_protocol": "http",
 		"tls_termination": "caddy",
 		"service_name": "code-server",
@@ -311,7 +311,7 @@ func BenchmarkACLCheck(b *testing.B) {
 func BenchmarkConfigLookup(b *testing.B) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"data":{"data":{"enabled":true,"backend":"10.11.30.26:8080","service_name":"test"}}}`)
+		io.WriteString(w, `{"data":{"data":{"enabled":true,"backend":"192.0.2.10:8080","service_name":"test"}}}`)
 	}))
 	defer server.Close()
 

@@ -29,7 +29,7 @@ The kontango platform runs on a 3-node controller cluster (DigitalOcean) connect
                     │  └──┬───┘ └──┬───┘ └──┬───┘ └──┬───┘
                     │     │        │        │        │    │
                     │     └────────┴────────┴────────┘    │
-                    │          10.11.30.0/16 LAN          │
+                    │          10.x.x.0/16 LAN          │
                     │     LXC containers, VMs, services   │
                     └─────────────────────────────────────┘
 ```
@@ -92,7 +92,7 @@ For node-specific services (Proxmox UI per node):
 ```
 Service: hank-pmx
   Intercept: hank.tango:8006 (clients dial this)
-  Host:      10.11.30.27:8006 (specific LAN backend)
+  Host:      <node-lan-ip>:8006 (specific LAN backend)
 ```
 
 ### Service Attributes and Policies
