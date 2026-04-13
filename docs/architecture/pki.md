@@ -1,87 +1,80 @@
 # PKI Architecture
 
-## Certificate Hierarchy
+## Principle
+
+**Ziti issues all mesh certificates. Bao stores them for backup and distribution.**
+
+Never issue Ziti internal certificates from an external PKI (Bao PKI engine, self-signed, etc.). The Ziti controller has its own signing chain that issues router and identity certificates during enrollment. External PKIs cause trust chain mismatches across the mesh.
+
+## Certificate Chain
 
 ```
-Kontango Root CA (EC P-256, self-signed, 10-year)
-  └── Kontango Intermediate CA (EC P-256, 5-year)
-        ├── Controller server certificates (per-node)
-        ├── Router enrollment certificates (per-router, issued by Ziti)
-        └── Identity enrollment certificates (per-device, issued by Ziti)
+root-ca (self-signed, NetFoundry format)
+  └── intermediate-ctrl-1 (signing authority)
+        ├── Controller server certs
+        │     CN: ctrl-N
+        │     SANs: ctrl-N.tango, IP, 127.0.0.1
+        │     URI: spiffe://tango/controller/ctrl-N
+        ├── Router certs (issued during enrollment)
+        └── Identity certs (issued during enrollment)
 ```
 
-The root and intermediate CAs are generated once during leader bootstrap. The intermediate CA key is used by the Ziti controller to sign enrollment certificates for routers and identities.
+The signing chain (`intermediate-ctrl-1` + `root-ca`) lives at `/etc/kontango/pki/signing-chain.crt` and `/etc/kontango/pki/intermediate.key` on each controller.
 
-## Certificate Locations
+## CA Bundle
 
-### Controllers (`/etc/kontango/pki/`)
+The CA bundle at `/etc/kontango/pki/ca-bundle.pem` must contain ALL CAs that any component might present:
 
-| File | Purpose |
-|------|---------|
-| `ca-bundle.pem` | Root CA + Intermediate CA (distributed to all clients) |
-| `server.crt` | Node's server certificate |
-| `server.key` | Node's server private key |
-| `signing-chain.crt` | Intermediate cert chain (used by Ziti for enrollment signing) |
-| `intermediate.key` | Intermediate CA private key (used by Ziti for enrollment signing) |
+- Kontango Intermediate CA + Kontango Root CA
+- Mesh Intermediate CA (intermediate.tango) + Mesh Root CA (tango)
+- intermediate-ctrl-1 + root-ca (Ziti signing PKI)
 
-### Routers (`/opt/kontango/ziti/<router-name>/`)
+This allows the controller to trust certs from all historical PKI generations.
 
-| File | Purpose |
-|------|---------|
-| `client.crt` | Router's client certificate (issued during enrollment) |
-| `client.key` | Router's client private key |
-| `server.crt` | Router's server certificate (for edge listeners) |
-| `cas.crt` | CA bundle (matches controller's ca-bundle.pem) |
+## Host Config Format
 
-## Server Certificate SANs
+**All host configs MUST use `host.v1` format.**
 
-Controller certificates include these Subject Alternative Names:
+The C SDK `ziti-edge-tunnel` v1.12 `run-host` mode does not support `host.v2` for hosting. The `host.v2` format (with `terminators` array) is only understood by the Go SDK and the router's built-in tunneler.
 
-- `ctrl-N` (short name)
-- `*.prod.konoss.org` (wildcard for Caddy SNI routing)
-- `ctrl-N.prod.konoss.org` (node-specific)
-- `ctrl-N.tango` (overlay address)
-- Node public IP address
-- `127.0.0.1`
-- SPIFFE URI: `spiffe://prod.konoss.org/controller/ctrl-N`
+```json
+// host.v1 (REQUIRED for run-host)
+{"address": "127.0.0.1", "port": 8200, "protocol": "tcp"}
 
-## Trust Model
-
-### Controller → Controller
-Controllers trust each other through the shared CA bundle. Raft communication (Ziti on 1280, Bao on 8201) uses mTLS with the same server certificate.
-
-### Router → Controller
-Routers connect to controllers using the CA bundle received during enrollment. The controller endpoint is specified as a hostname that matches the server certificate SANs.
-
-### Client → Controller
-CLI tools (like `ziti edge login`) must provide the CA bundle via `--ca` flag. The CA file is stored locally at `~/.kontango/certs/ziti-ca.pem`.
-
-### Identity → Services
-Device identities receive certificates during enrollment. These certificates are signed by the Ziti controller using the intermediate CA. The identity file (JSON) contains the certificate, key, and CA bundle inline.
-
-## Key Operations
-
-### Generate PKI (leader only)
-```
-ziti pki create ca --pki-root <dir> --ca-name root-ca --trust-domain <domain>
-ziti pki create intermediate --ca-name root-ca --intermediate-name intermediate
-ziti pki create server --intermediate-name intermediate --server-name <node>
+// host.v2 (DO NOT USE for run-host)
+{"terminators": [{"address": "127.0.0.1", "port": 8200, "protocol": "tcp"}]}
 ```
 
-### Enroll Router
+## Storage in Bao
+
+All PKI artifacts stored in the `ziti/` namespace:
+
 ```
-ziti edge create edge-router <name> --tunneler-enabled --role-attributes <attrs>
-ziti router enroll <config.yaml> --jwt <token.jwt>
+ziti/secret/
+  admin              — username, password, cluster info
+  pki/
+    ca-bundle        — Full CA bundle (base64)
+  controllers/
+    ctrl-1           — Server cert, key, CA bundle
+    ctrl-2           — Server cert, key, CA bundle
+    ctrl-3           — Server cert, key, CA bundle
+  routers/
+    ctrl-1           — Router cert, key, CAs
+    ctrl-2           — Router cert, key, CAs
+    ctrl-3           — Router cert, key, CAs
+    hank             — Router cert (if applicable)
 ```
 
-### Enroll Identity
-```
-ziti edge create identity <name> --role-attributes <attrs> -o <token.jwt>
-ziti edge enroll -j <token.jwt> -o <identity.json>
-```
+## Certificate Lifecycle
 
-## Rotation
+1. **Controller init**: `ziti controller run` generates the signing chain on first boot
+2. **Router enrollment**: `ziti router enroll -j <jwt>` gets a cert from the signing chain
+3. **Identity enrollment**: `ziti-edge-tunnel enroll -j <jwt>` gets a cert from the signing chain
+4. **Storage**: After enrollment, certs are backed up to Bao `ziti/` namespace
+5. **Rotation**: Re-enroll by deleting the identity/router and recreating with a new JWT
 
-Certificate rotation is handled by re-enrolling the router or identity. The controller issues a new certificate from the same intermediate CA. No manual PKI regeneration is needed unless the intermediate CA itself expires.
+## SPIFFE
 
-Bao stores a backup of all issued certificates for audit and recovery purposes.
+Controller certs include SPIFFE URI SANs: `spiffe://tango/controller/ctrl-N`
+
+The SPIFFE path segment must match the controller's node ID (derived from the cert CN). If CN is `ctrl-1`, the SPIFFE URI must be `spiffe://tango/controller/ctrl-1`.
