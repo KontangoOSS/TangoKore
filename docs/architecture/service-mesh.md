@@ -3,112 +3,112 @@
 ## Principles
 
 1. **Every service gets a `.tango` hostname** — No raw IPs in configs. Services are addressed by name.
-2. **host.v2 for all host configs** — Supports multi-terminator routing and smartrouting.
-3. **tproxy mode on all edge routers** — Provides transparent DNS resolution and traffic interception.
-4. **Least-privilege policies** — Services are grouped by attribute. Identities get the minimum access needed.
-5. **Caddy for public ingress only** — Internal traffic stays on the Ziti overlay. Caddy handles TLS termination for external clients.
+2. **Ziti issues certs, Bao stores them** — Never issue Ziti certs externally.
+3. **Routers route, tunnels host** — Routers handle mesh routing only (no `--tunneler-enabled`). Service hosting is done by `ziti-edge-tunnel run-host` with dedicated identities.
+4. **host.v1 only** — The C SDK tunnel doesn't support host.v2 for hosting.
+5. **Role-based access** — Services are grouped by attribute. Identities get access by role, not by name.
 
-## Service Registration
+## Service Architecture
 
-### Config Types
+```
+Client (admin-workstation.tango)
+  │
+  │ dial forgejo.tango:3000
+  │
+  ▼
+Local tunnel (ziti-edge-tunnel run)
+  │ intercepts .tango DNS → 100.64.0.x
+  │
+  ▼
+Ziti Router (ctrl-1.tango)
+  │ finds terminator for forgejo service
+  │ routes circuit to hosting router
+  │
+  ▼
+Ziti Router (ctrl-2.tango)
+  │ delivers to tunnel terminator
+  │
+  ▼
+Host tunnel (ziti-edge-tunnel run-host on forgejo LXC)
+  │ forwards to 127.0.0.1:3000
+  │
+  ▼
+Forgejo application
+```
 
-Each service requires two configs:
+## Terminator Types
 
-**intercept.v1** — Client-side. Defines what hostname and port clients use to reach the service.
-```json
-{
-  "protocols": ["tcp"],
-  "addresses": ["grafana.tango"],
-  "portRanges": [{"low": 3000, "high": 3000}]
+| Type | Created By | Use Case |
+|------|-----------|----------|
+| `tunnel` | ziti-edge-tunnel run-host | C SDK hosting — this is what we use |
+| `edge` | Router with --tunneler-enabled | Router built-in hosting — DO NOT USE |
+
+**Never use `--tunneler-enabled` on routers.** It creates `edge` terminators for ALL services the router identity can bind, regardless of whether the service actually runs on that node. This causes phantom terminators that route traffic to `127.0.0.1` on nodes where the service doesn't exist.
+
+## Services (Live)
+
+### Infrastructure (#infrastructure)
+
+| Service | Intercept | Host | Hosted By |
+|---------|----------|------|-----------|
+| bao-api | bao.tango:8200 | 127.0.0.1:8200 | DO controllers |
+| bao-cluster | bao.tango:8201 | 127.0.0.1:8201 | DO controllers |
+| ziti-ctrl | ziti-ctrl.tango:1280 | 127.0.0.1:1280 | DO controllers |
+| ssh-private | ssh.tango:22 | 127.0.0.1:22 | DO controllers |
+| pmx-api | pmx.tango:8006 | 127.0.0.1:8006 | DO controllers |
+| hank-pmx | hank.tango:8006 | 127.0.0.1:8006 | DO controllers* |
+| slim1-pmx | slim1.tango:8006 | 127.0.0.1:8006 | DO controllers* |
+| slim2-pmx | slim2.tango:8006 | 127.0.0.1:8006 | DO controllers* |
+| pve-pmx | pve.tango:8006 | 127.0.0.1:8006 | DO controllers* |
+
+*Node-specific PMX services should eventually be hosted by their respective LAN nodes.
+
+### Telemetry (#telemetry)
+
+| Service | Intercept | Host | Hosted By |
+|---------|----------|------|-----------|
+| nats-telemetry | nats.tango:4222 | 127.0.0.1:4222 | DO controllers |
+| grafana | grafana.tango:3000 | 127.0.0.1:3000 | DO controllers |
+| influxdb | influxdb.tango:8086 | 127.0.0.1:8086 | DO controllers |
+
+### Web Services (#web-services)
+
+| Service | Intercept | Host | Hosted By |
+|---------|----------|------|-----------|
+| forgejo | forgejo.tango:3000 | 127.0.0.1:3000 | forgejo LXC |
+
+## Adding a New Service
+
+1. Create intercept config: `name-intercept` (intercept.v1)
+2. Create host config: `name-host` (**host.v1**, address `127.0.0.1`)
+3. Create service with role attribute (`infrastructure`, `telemetry`, or `web-services`)
+4. Attach both configs to the service
+5. Existing bind/dial policies cover it — no new policy needed
+6. Restart the `run-host` process on the hosting node to pick up the new service
+
+## Public Access via Caddy
+
+For services that need public web access, add a Caddy route:
+
+```
+# Direct proxy (service runs on controller)
+bao.example.org {
+  reverse_proxy localhost:8200 { transport http { tls; tls_insecure_skip_verify } }
+}
+
+# Ziti transport (service runs on LAN node)
+git.example.org {
+  reverse_proxy forgejo.tango:3000 {
+    transport ziti { identity /opt/kontango/caddy/caddy-gateway.json }
+  }
 }
 ```
 
-**host.v2** — Server-side. Defines where traffic is forwarded. Uses terminators for multi-host routing.
-```json
-{
-  "terminators": [{
-    "address": "grafana.tango",
-    "port": 3000,
-    "protocol": "tcp"
-  }]
-}
-```
+The Ziti transport uses the `caddy-gateway.tango` identity (role `#gateway`) which can only reach `#public` routers and can only dial `#web-services`.
 
-When the host address is a `.tango` name, the router resolves it through the Ziti overlay. When it's a LAN IP, the router forwards directly on the local network.
+## DNS Resolution
 
-### Adding a New Service
-
-1. Create the host config (host.v2)
-2. Create the intercept config (intercept.v1)
-3. Create the service with both configs and the appropriate attribute
-4. The service is immediately available on all routers with matching bind policies
-
-No new policies are needed unless the service belongs to a new attribute group.
-
-### Service Attributes
-
-| Attribute | Description | Bound by | Dialed by |
-|-----------|-------------|----------|-----------|
-| `#infrastructure` | Core platform services | `#controller` | `#admin`, `#workstation` |
-| `#telemetry` | Monitoring and metrics | `#controller`, `#telemetry` | `#admin`, `#workstation`, `#device-base` |
-
-## Router Configuration
-
-### Controller Routers (DO nodes)
-
-Controller routers run in **host** mode. They bind services but do not intercept local traffic — the controller processes access services directly via localhost.
-
-- Link listeners on port 3022 (inter-router mesh)
-- Edge listeners on port 3023 (client connections)
-- Tunnel binding in host mode
-
-### Edge Routers (edge nodes)
-
-Edge routers run in **tproxy** mode. They both bind and intercept services, providing:
-
-- DNS resolution: `.tango` hostnames resolve to Ziti IPs (`100.64.0.0/10`)
-- Transparent interception: Traffic to Ziti IPs is captured and routed through the overlay
-- Local hosting: Services running on the node are terminated locally
-
-**DNS requirement:** The node's `/etc/resolv.conf` must list `127.0.0.1` as the first nameserver so the router's DNS server handles `.tango` queries.
-
-### Router Identity Attributes
-
-| Attribute | Purpose |
-|-----------|---------|
-| `#controller` | Can bind `#infrastructure` services |
-| `#telemetry` | Can bind `#telemetry` services |
-| `#lan` | Identifies LAN-connected routers |
-
-## Smartrouting
-
-When multiple routers bind the same service, Ziti's smartrouting selects the optimal terminator based on:
-
-- Latency to each terminator
-- Current load and dynamic cost
-- Router proximity in the mesh
-
-This means a client on `node-1` dialing `bao.tango` will prefer the terminator on `node-1` (local) over one on `ctrl-1` (remote), unless the local terminator is unhealthy.
-
-## DNS Flow
-
-```
-1. Application resolves grafana.tango
-2. Query hits 127.0.0.1:53 (Ziti router DNS)
-3. Router returns 100.64.0.X (Ziti-assigned IP)
-4. Application connects to 100.64.0.X:3000
-5. tproxy intercepts the connection
-6. Router dials grafana service through Ziti overlay
-7. Smartrouting selects best terminator
-8. Traffic delivered to backend
-```
-
-## Naming Conventions
-
-| Pattern | Example | Usage |
-|---------|---------|-------|
-| `<service>.tango` | `grafana.tango` | Service intercept address |
-| `<node>.tango` | `node-1.tango` | Node-specific service (e.g., hypervisor UI) |
-| `<service>-host` | `grafana-host` | host.v2 config name |
-| `<service>-intercept` | `grafana-intercept` | intercept.v1 config name |
-| `<node>-pmx` | `node-1-pmx` | Per-node hypervisor UI service name |
+- `.tango` domains resolve through the Ziti tunnel's DNS interceptor (100.64.0.0/10 range)
+- Public domains (`.example.org`) resolve through Cloudflare DNS
+- OPNsense BIND should NOT have local overrides for any `.example.org` domains
+- `/etc/hosts` should NOT have entries for `.example.org` domains (causes Ziti tunnel to cache stale IPs)
