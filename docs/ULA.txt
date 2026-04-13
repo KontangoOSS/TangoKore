@@ -1,0 +1,156 @@
+================================================================================
+                    KONTANGO PLATFORM - USER AGREEMENT
+                           Data Collection Notice
+================================================================================
+
+IMPORTANT: Before installing the Kontango platform, please review the
+comprehensive data that will be collected from your device.
+
+By proceeding with installation, you acknowledge and consent to the collection,
+transmission, and storage of the following information:
+
+================================================================================
+                            SYSTEM INFORMATION
+================================================================================
+
+1. DEVICE IDENTIFICATION
+   - Hostname / Device name
+   - Machine UUID (from /etc/machine-id or equivalent)
+   - Device serial number (from BIOS/DMI if available)
+   - Boot ID (unique per system boot)
+   - Product name (hardware model identifier)
+
+2. OPERATING SYSTEM
+   - OS family (Linux, macOS, Windows, etc.)
+   - OS version and distribution (e.g., Ubuntu 24.04)
+   - Kernel version and build information
+   - System architecture (x86_64, arm64, etc.)
+   - System timezone
+   - System locale and language settings
+
+3. HARDWARE SPECIFICATIONS
+   - CPU model and brand string
+   - Number of CPU cores/processors
+   - Total system RAM (in MB)
+   - Disk serial numbers and identifiers
+   - Hardware hash (SHA256 of MACs + serial + machine_id)
+   - BIOS/Firmware version
+
+================================================================================
+                          NETWORK INFORMATION
+================================================================================
+
+4. NETWORK CONFIGURATION
+   - All MAC addresses (from all network interfaces)
+   - DNS servers (from /etc/resolv.conf)
+   - Default gateway IP address
+   - Open listening ports
+   - Source IP address (connection metadata)
+   - TLS/JA4 fingerprint (from connection)
+   - User-Agent string
+
+5. SECURITY & CRYPTOGRAPHY
+   - All SSH host public keys
+   - Device identity certificate fingerprints
+
+================================================================================
+                       SOFTWARE & RUNTIME INFORMATION
+================================================================================
+
+6. INSTALLED SOFTWARE
+   - Count of installed packages
+   - Package manager detection (dpkg, rpm, brew, etc.)
+   - System uptime in seconds
+
+7. DEVICE SERVICES
+   - Installation of Ziti tunnel
+   - Installation of Kontango agent
+   - Portal/UI installation (if selected)
+   - Caddy reverse proxy installation
+   - Bao client installation
+
+================================================================================
+                          DATA TRANSMISSION
+================================================================================
+
+HOW DATA IS SENT:
+- Initial enrollment: Comprehensive fingerprint POST to /api/enroll/stream
+- Post-enrollment: Progress updates via Ziti authenticated channel
+- All transmissions: Encrypted over TLS (HTTPS) and Ziti overlay
+- Frequency: Initial collection during install, periodic healthchecks after
+
+WHERE DATA IS STORED:
+- Controller: Bao KV store (encrypted at rest)
+- Archives: NATS JetStream (24-hour retention by default)
+- Local device: /opt/kontango/machine.json (encrypted, 600 mode)
+
+WHO CAN ACCESS:
+- Controller administrators only
+- Ziti-authenticated requests with appropriate role attributes
+- SSH access via Ziti (admin only, no direct SSH)
+
+DATA RETENTION:
+- Active device records: Indefinite (while enrolled)
+- Audit logs: 24 hours in NATS streams
+- Progress events: 24 hours in NATS streams
+- Hardware profile: Retained for re-enrollment matching
+
+================================================================================
+                              USE CASES
+================================================================================
+
+This data is collected for:
+
+✓ Device verification and fingerprinting
+✓ Preventing duplicate/spoofed enrollments
+✓ Generating device identity in Ziti network
+✓ Creating role-based access control attributes
+✓ Monitoring device health and status
+✓ Installation progress tracking
+✓ Security audit trails
+✓ Supporting cluster joining operations
+✓ Re-enrollment of known devices
+
+================================================================================
+                       INSTALLATION FLAGS
+================================================================================
+
+ACKNOWLEDGMENT REQUIRED:
+  - Install script will display this ULA before starting
+  - You must type 'Y' to proceed (case-insensitive)
+  - Alternatively, use '-y' flag to auto-acknowledge
+     (This is an explicit acknowledgment of data collection)
+
+EXAMPLE:
+  $ curl https://konoss.org/install | sh           # Will prompt
+  $ curl https://konoss.org/install | sh -y        # Auto-acknowledge
+
+REJECTION:
+  - If you do not approve, press Ctrl+C or type 'N'
+  - Installation will halt without collecting or transmitting data
+
+================================================================================
+                          PRIVACY & SECURITY
+================================================================================
+
+✓ Data is NOT shared with third parties
+✓ Data is NOT used for tracking or profiling beyond device management
+✓ Data is NOT sold or monetized
+✓ Encryption in transit: TLS 1.2+ and Ziti overlay
+✓ Access control: Role-based via Ziti attributes
+✓ Deletion: Upon device unenrollment, data is removed from controller
+✓ Transparency: All collected fields documented in this notice
+
+For questions about data handling, security, or privacy:
+  - GitHub: https://github.com/KontangoOSS
+  - Documentation: https://konoss.org/docs/privacy
+
+================================================================================
+
+This agreement constitutes your consent to data collection by the Kontango
+platform. By proceeding, you acknowledge that you have read and understood
+the information above and agree to the data collection practices described.
+
+Installation of Kontango requires explicit acknowledgment of this notice.
+
+================================================================================

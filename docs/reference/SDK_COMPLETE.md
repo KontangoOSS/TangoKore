@@ -162,7 +162,7 @@ Privacy & Control:
 ═══════════════════════════════════════════════════════════════
 
 enrolling…
-enrolled: leonardo-da-pc (a1b2c3d4-xyz) [quarantine]
+enrolled: test-workstation (a1b2c3d4-xyz) [quarantine]
 ```
 
 ### Interactive Path (TUI)

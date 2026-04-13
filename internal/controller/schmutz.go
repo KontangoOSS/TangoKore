@@ -22,6 +22,13 @@ func stepSchmutz(cfg *Config) error {
 		return nil
 	}
 
+	// Check if schmutz binary exists (it may not be available on initial bootstrap)
+	schmutzPath := filepath.Join(cfg.BinDir, "schmutz-controller")
+	if _, err := os.Stat(schmutzPath); err != nil {
+		log.Println("  ⚠ schmutz-controller binary not available (skipping schmutz)")
+		return nil
+	}
+
 	// For now, assume controller mode (TODO: add NodeRole to Config for split-node)
 	isController := !cfg.JoinMode
 

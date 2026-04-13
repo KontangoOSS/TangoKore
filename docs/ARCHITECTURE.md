@@ -148,3 +148,12 @@ schmutz (edge gateway)
 4. **Secrets never in git**: Templates live in git. Secrets live in OpenBao. They meet at runtime in memory.
 5. **One-time credentials**: AppRole secret_ids are single-use, issued at deploy time, burned after first auth.
 6. **Edge classification**: Schmutz fingerprints every TLS handshake before routing. Bots and scanners are caught at the hello, before any HTTP traffic flows.
+
+## Detailed Architecture
+
+For production deployment specifics, see:
+
+- **[architecture/production-topology.md](architecture/production-topology.md)** — Cluster layout, systemd services, firewall rules, bootstrap sequence
+- **[architecture/service-mesh.md](architecture/service-mesh.md)** — Ziti service registration, DNS resolution, policy matrix, router modes
+- **[architecture/caddy-routing.md](architecture/caddy-routing.md)** — Caddy L4 gateway, TLS termination, SNI routing
+- **[architecture/pki.md](architecture/pki.md)** — Certificate hierarchy, trust model, key operations

@@ -68,12 +68,12 @@ func buildSteps(cfg *Config) []step {
 	return []step{
 		{"preflight", stepPreflight, nil},
 		{"download", stepDownload, nil},
-		// Bao: init for leader, join for followers
-		{"bao-init", stepBaoInit, func(c *Config) bool { return c.JoinMode }},
-		{"bao-join", stepBaoJoin, func(c *Config) bool { return !c.JoinMode }},
-		// PKI: generate for leader, fetch from leader for followers
+		// PKI: generate for leader, fetch from leader for followers (must come before bao-init)
 		{"pki", stepPKI, func(c *Config) bool { return c.JoinMode }},
 		{"pki-from-leader", stepPKIFromLeader, func(c *Config) bool { return !c.JoinMode }},
+		// Bao: init for leader, join for followers (uses PKI certs from step above)
+		{"bao-init", stepBaoInit, func(c *Config) bool { return c.JoinMode }},
+		{"bao-join", stepBaoJoin, func(c *Config) bool { return !c.JoinMode }},
 		{"ziti", stepZiti, nil},
 		// Store credentials: controller-only (not replicated from leader)
 		{"store-creds", stepStoreCreds, func(c *Config) bool { return c.JoinMode }},

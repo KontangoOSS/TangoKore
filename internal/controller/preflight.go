@@ -8,33 +8,379 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
+	"syscall"
+	"time"
 )
 
-// stepPreflight checks prerequisites and prepares directories
+// stepPreflight runs comprehensive system checks before bootstrap.
+// Validates: user, OS, architecture, kernel, memory, disk, DNS,
+// network connectivity, required commands, ports, and time sync.
 func stepPreflight(cfg *Config) error {
 	log.Println("preflight checks...")
 
-	// Check root
+	// ── User & Permissions ──
+	if err := checkRoot(); err != nil {
+		return err
+	}
+
+	// ── OS & Architecture ──
+	if err := checkPlatform(); err != nil {
+		return err
+	}
+
+	// ── System Resources ──
+	if err := checkResources(cfg); err != nil {
+		return err
+	}
+
+	// ── Required Commands ──
+	if err := checkCommands(); err != nil {
+		return err
+	}
+
+	// ── Network Connectivity ──
+	if err := checkNetwork(); err != nil {
+		return err
+	}
+
+	// ── DNS Resolution ──
+	if err := checkDNS(cfg); err != nil {
+		return err
+	}
+
+	// ── Port Availability ──
+	if err := checkPorts(cfg); err != nil {
+		return err
+	}
+
+	// ── Time Synchronization ──
+	checkTimesync()
+
+	// ── Create Directories ──
+	if err := createDirectories(cfg); err != nil {
+		return err
+	}
+
+	// ── Detect Public IP ──
+	ip, err := detectPublicIP()
+	if err != nil {
+		log.Printf("  ⚠ could not detect public IP: %v, trying hostname\n", err)
+		ip = "127.0.0.1"
+	}
+	cfg.NodePublicIP = ip
+	log.Printf("  ✓ public IP: %s\n", ip)
+
+	// ── Firewall ──
+	if err := configureFirewall(cfg); err != nil {
+		return fmt.Errorf("firewall: %w", err)
+	}
+
+	log.Println("  ✓ all preflight checks passed")
+	return nil
+}
+
+// checkRoot verifies the process is running as root.
+func checkRoot() error {
 	currentUser, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("get current user: %w", err)
 	}
 	if currentUser.Uid != "0" {
-		return fmt.Errorf("must run as root")
+		return fmt.Errorf("must run as root (current uid=%s)", currentUser.Uid)
 	}
 	log.Println("  ✓ running as root")
+	return nil
+}
 
-	// Check required binaries
-	requiredCmds := []string{"mkdir", "curl", "systemctl"}
-	for _, cmd := range requiredCmds {
-		if _, err := exec.LookPath(cmd); err != nil {
-			return fmt.Errorf("required command not found: %s", cmd)
+// checkPlatform validates the OS, architecture, and kernel version.
+func checkPlatform() error {
+	if runtime.GOOS != "linux" {
+		return fmt.Errorf("unsupported OS: %s (linux required)", runtime.GOOS)
+	}
+
+	switch runtime.GOARCH {
+	case "amd64", "arm64":
+		// supported
+	default:
+		return fmt.Errorf("unsupported architecture: %s (amd64 or arm64 required)", runtime.GOARCH)
+	}
+
+	log.Printf("  ✓ platform: %s/%s\n", runtime.GOOS, runtime.GOARCH)
+
+	// Check kernel version (need >= 4.15 for modern networking)
+	if out, err := exec.Command("uname", "-r").Output(); err == nil {
+		kernel := strings.TrimSpace(string(out))
+		log.Printf("  ✓ kernel: %s\n", kernel)
+		parts := strings.SplitN(kernel, ".", 3)
+		if len(parts) >= 2 {
+			major, _ := strconv.Atoi(parts[0])
+			minor, _ := strconv.Atoi(parts[1])
+			if major < 4 || (major == 4 && minor < 15) {
+				return fmt.Errorf("kernel %s too old (>= 4.15 required for eBPF and modern networking)", kernel)
+			}
 		}
 	}
-	log.Printf("  ✓ required commands available\n")
 
-	// Create directories
+	// Detect distro
+	if data, err := os.ReadFile("/etc/os-release"); err == nil {
+		lines := strings.Split(string(data), "\n")
+		var prettyName string
+		var versionID string
+		for _, line := range lines {
+			if strings.HasPrefix(line, "PRETTY_NAME=") {
+				prettyName = strings.Trim(strings.TrimPrefix(line, "PRETTY_NAME="), "\"")
+			}
+			if strings.HasPrefix(line, "VERSION_ID=") {
+				versionID = strings.Trim(strings.TrimPrefix(line, "VERSION_ID="), "\"")
+			}
+		}
+		if prettyName != "" {
+			log.Printf("  ✓ distro: %s\n", prettyName)
+		}
+
+		// Warn on unsupported distros
+		content := string(data)
+		supported := strings.Contains(content, "ubuntu") || strings.Contains(content, "debian")
+		if !supported {
+			log.Printf("  ⚠ untested distro — Ubuntu 22.04+ or Debian 12+ recommended\n")
+		}
+
+		// Warn on old versions
+		if versionID != "" {
+			ver, _ := strconv.ParseFloat(versionID, 64)
+			if strings.Contains(content, "ubuntu") && ver < 22.04 {
+				log.Printf("  ⚠ Ubuntu %s is old — 22.04+ recommended\n", versionID)
+			}
+			if strings.Contains(content, "debian") && ver < 12 {
+				log.Printf("  ⚠ Debian %s is old — 12+ recommended\n", versionID)
+			}
+		}
+	}
+
+	// Check systemd
+	if _, err := exec.LookPath("systemctl"); err != nil {
+		return fmt.Errorf("systemd not found — required for service management")
+	}
+
+	return nil
+}
+
+// checkResources verifies minimum memory and disk space.
+func checkResources(cfg *Config) error {
+	// Memory check (minimum 512MB, recommended 1GB)
+	var info syscall.Sysinfo_t
+	if err := syscall.Sysinfo(&info); err == nil {
+		totalMB := info.Totalram * uint64(info.Unit) / 1024 / 1024
+		freeMB := (info.Freeram + info.Bufferram) * uint64(info.Unit) / 1024 / 1024
+		log.Printf("  ✓ memory: %d MB total, %d MB available\n", totalMB, freeMB)
+
+		if totalMB < 512 {
+			return fmt.Errorf("insufficient memory: %d MB (minimum 512 MB)", totalMB)
+		}
+		if totalMB < 1024 {
+			log.Printf("  ⚠ low memory: %d MB (1024 MB+ recommended for production)\n", totalMB)
+		}
+	}
+
+	// Disk check on target directory (minimum 2GB free)
+	targetDir := cfg.Home
+	if targetDir == "" {
+		targetDir = "/opt/kontango"
+	}
+	// Check the parent directory if target doesn't exist yet
+	checkDir := targetDir
+	for checkDir != "/" {
+		if _, err := os.Stat(checkDir); err == nil {
+			break
+		}
+		checkDir = filepath.Dir(checkDir)
+	}
+
+	var stat syscall.Statfs_t
+	if err := syscall.Statfs(checkDir, &stat); err == nil {
+		freeGB := stat.Bavail * uint64(stat.Bsize) / 1024 / 1024 / 1024
+		totalGB := stat.Blocks * uint64(stat.Bsize) / 1024 / 1024 / 1024
+		log.Printf("  ✓ disk: %d GB free / %d GB total on %s\n", freeGB, totalGB, checkDir)
+
+		if freeGB < 2 {
+			return fmt.Errorf("insufficient disk space: %d GB free (minimum 2 GB)", freeGB)
+		}
+		if freeGB < 5 {
+			log.Printf("  ⚠ low disk: %d GB free (5 GB+ recommended)\n", freeGB)
+		}
+	}
+
+	// CPU count
+	cpus := runtime.NumCPU()
+	log.Printf("  ✓ CPUs: %d\n", cpus)
+	if cpus < 2 {
+		log.Println("  ⚠ single CPU detected — 2+ recommended for production")
+	}
+
+	return nil
+}
+
+// checkCommands verifies all required system commands are available.
+func checkCommands() error {
+	required := []struct {
+		cmd  string
+		desc string
+	}{
+		{"curl", "HTTP client for downloads"},
+		{"openssl", "TLS certificate generation"},
+		{"tar", "archive extraction"},
+		{"systemctl", "service management"},
+		{"ip", "network configuration"},
+	}
+
+	optional := []struct {
+		cmd  string
+		desc string
+	}{
+		{"ufw", "firewall management"},
+		{"jq", "JSON processing"},
+		{"unzip", "archive extraction"},
+	}
+
+	for _, c := range required {
+		if _, err := exec.LookPath(c.cmd); err != nil {
+			return fmt.Errorf("required command not found: %s (%s)", c.cmd, c.desc)
+		}
+	}
+	log.Println("  ✓ required commands: curl, openssl, tar, systemctl, ip")
+
+	var missing []string
+	for _, c := range optional {
+		if _, err := exec.LookPath(c.cmd); err != nil {
+			missing = append(missing, c.cmd)
+		}
+	}
+	if len(missing) > 0 {
+		log.Printf("  ⚠ optional commands missing: %s\n", strings.Join(missing, ", "))
+	}
+
+	return nil
+}
+
+// checkNetwork verifies outbound internet connectivity.
+func checkNetwork() error {
+	targets := []struct {
+		host string
+		desc string
+	}{
+		{"1.1.1.1:443", "internet (Cloudflare DNS)"},
+		{"github.com:443", "GitHub (binary downloads)"},
+	}
+
+	for _, t := range targets {
+		conn, err := net.DialTimeout("tcp", t.host, 5*time.Second)
+		if err != nil {
+			return fmt.Errorf("network unreachable: %s (%s) — %v", t.desc, t.host, err)
+		}
+		conn.Close()
+	}
+	log.Println("  ✓ outbound connectivity: internet and GitHub reachable")
+
+	return nil
+}
+
+// checkDNS verifies DNS resolution for the configured domains.
+func checkDNS(cfg *Config) error {
+	if cfg.TestMode {
+		log.Println("  ✓ DNS: skipped (test mode)")
+		return nil
+	}
+
+	if cfg.Domain == "" {
+		log.Println("  ✓ DNS: skipped (no domain configured)")
+		return nil
+	}
+
+	// Check the main domain resolves
+	domains := []string{cfg.Domain}
+	if cfg.JoinDomain != "" {
+		domains = append(domains, cfg.JoinDomain)
+	}
+	// Also check the node-specific FQDN
+	nodeFQDN := cfg.Name + "." + cfg.Domain
+	domains = append(domains, nodeFQDN)
+
+	for _, domain := range domains {
+		addrs, err := net.LookupHost(domain)
+		if err != nil {
+			log.Printf("  ⚠ DNS: %s does not resolve — %v\n", domain, err)
+			log.Printf("    → ensure DNS A/CNAME records are configured before production use\n")
+			continue
+		}
+		log.Printf("  ✓ DNS: %s → %s\n", domain, strings.Join(addrs, ", "))
+	}
+
+	// Verify DNS resolvers work
+	if _, err := net.LookupHost("github.com"); err != nil {
+		return fmt.Errorf("DNS resolution broken: cannot resolve github.com — %v", err)
+	}
+
+	return nil
+}
+
+// checkPorts verifies required ports are not already in use.
+func checkPorts(cfg *Config) error {
+	ports := []struct {
+		port int
+		desc string
+	}{
+		{80, "HTTP (Caddy)"},
+		{443, "HTTPS (Caddy)"},
+		{cfg.ZitiCtrlPort, "Ziti controller"},
+		{cfg.ZitiEdgePort, "Ziti edge"},
+		{cfg.BaoPort, "Bao API"},
+		{cfg.SchmutzPort, "Schmutz enrollment"},
+	}
+
+	var conflicts []string
+	for _, p := range ports {
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", p.port))
+		if err != nil {
+			conflicts = append(conflicts, fmt.Sprintf("%d (%s)", p.port, p.desc))
+			continue
+		}
+		ln.Close()
+	}
+
+	if len(conflicts) > 0 {
+		log.Printf("  ⚠ ports in use: %s\n", strings.Join(conflicts, ", "))
+		log.Println("    → these services may conflict with the bootstrap")
+	} else {
+		log.Println("  ✓ required ports available: 80, 443, " +
+			fmt.Sprintf("%d, %d, %d, %d", cfg.ZitiCtrlPort, cfg.ZitiEdgePort, cfg.BaoPort, cfg.SchmutzPort))
+	}
+
+	return nil
+}
+
+// checkTimesync warns if the system clock appears to be off.
+func checkTimesync() {
+	// Check if NTP/chrony/systemd-timesyncd is active
+	timesyncServices := []string{"systemd-timesyncd", "chrony", "ntp", "ntpd"}
+	synced := false
+	for _, svc := range timesyncServices {
+		out, err := exec.Command("systemctl", "is-active", svc).Output()
+		if err == nil && strings.TrimSpace(string(out)) == "active" {
+			log.Printf("  ✓ time sync: %s active\n", svc)
+			synced = true
+			break
+		}
+	}
+	if !synced {
+		log.Println("  ⚠ no time sync service detected — TLS certificates require accurate clocks")
+	}
+}
+
+// createDirectories creates the installation directory tree.
+func createDirectories(cfg *Config) error {
 	dirs := []string{
 		cfg.Home,
 		cfg.BinDir,
@@ -49,23 +395,7 @@ func stepPreflight(cfg *Config) error {
 			return fmt.Errorf("mkdir %s: %w", dir, err)
 		}
 	}
-	log.Printf("  ✓ created directories\n")
-
-	// Detect public IP
-	ip, err := detectPublicIP()
-	if err != nil {
-		// Fall back to hostname IP
-		log.Printf("  ⚠ could not detect public IP: %v, trying hostname\n", err)
-		ip = "127.0.0.1"
-	}
-	cfg.NodePublicIP = ip
-	log.Printf("  ✓ detected public IP: %s\n", ip)
-
-	// Configure firewall
-	if err := configureFirewall(cfg); err != nil {
-		return fmt.Errorf("firewall: %w", err)
-	}
-
+	log.Printf("  ✓ directories created under %s\n", cfg.Home)
 	return nil
 }
 
@@ -154,10 +484,14 @@ func configureFirewall(cfg *Config) error {
 	// Additional peers are added post-install when the cluster forms.
 	clusterIPs := []string{"127.0.0.1", cfg.NodePublicIP}
 	if cfg.JoinMode && cfg.JoinLeader != "" {
-		// Extract IP or hostname from JoinLeader (format: "root@host")
+		// Extract IP or hostname from JoinLeader (format: "host:port" or "root@host:port")
 		leader := cfg.JoinLeader
 		if idx := strings.Index(leader, "@"); idx >= 0 {
 			leader = leader[idx+1:]
+		}
+		// Strip port if present (format: "host:port")
+		if idx := strings.Index(leader, ":"); idx >= 0 {
+			leader = leader[:idx]
 		}
 		// Resolve to IP if it's a hostname
 		if addrs, err := net.LookupHost(leader); err == nil && len(addrs) > 0 {

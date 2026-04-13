@@ -28,14 +28,14 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
 [CLIENT] Starting enrollment to http://127.0.0.1:46799
 [CLIENT] Method: new (unknown machine)
 
-  hostname:    leonardo-da-pc
+  hostname:    test-workstation
   os:          Ubuntu 25.04
   arch:        amd64
   fingerprint: 56dd0f732bc62988
 
 [SERVER] Received pre-auth announcement:
 [SERVER]   method: new
-[SERVER]   hostname: leonardo-da-pc
+[SERVER]   hostname: test-workstation
 [SERVER]   os: linux
 [SERVER]   arch: amd64
 [SERVER]   hardware_hash: 56dd0f732bc62988
@@ -56,9 +56,9 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
 
 [SERVER] Enrollment complete
 
-[CLIENT] ✓ Server received announcement with hostname: leonardo-da-pc
+[CLIENT] ✓ Server received announcement with hostname: test-workstation
 [CLIENT] ✓ Verification checks completed
-[CLIENT] ✓ Identity issued: leonardo-da-pc-new [quarantine]
+[CLIENT] ✓ Identity issued: test-workstation-new [quarantine]
 [CLIENT] ✓ Enrollment complete
 
 --- PASS: TestE2E_PreAuthAnnouncement (0.12s)
@@ -83,7 +83,7 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
    - Profile: `stage-0` (no privileges)
    
 5. **IDENTITY ISSUED** - Server sends back:
-   - Machine ID: `leonardo-da-pc-new`
+   - Machine ID: `test-workstation-new`
    - Certificate and config
    - Ziti tunnel endpoints
 
@@ -103,7 +103,7 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
 [CLIENT] This machine has enrolled before
 [CLIENT] Re-enrolling with --scan to restore previous identity
 
-  hostname:    leonardo-da-pc
+  hostname:    test-workstation
   os:          Ubuntu 25.04
   arch:        amd64
   fingerprint: 56dd0f732bc62988
@@ -117,10 +117,10 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
   verify: fingerprint_match ✓
   decision: approved (fingerprint match, restoring previous ACL)
 
-[SERVER] Issued restored identity: leonardo-da-pc-known [approved]
+[SERVER] Issued restored identity: test-workstation-known [approved]
 
 [CLIENT] ✓ Server recognized machine (fingerprint match)
-[CLIENT] ✓ Previous identity restored: leonardo-da-pc-known
+[CLIENT] ✓ Previous identity restored: test-workstation-known
 [CLIENT] ✓ Status: approved (privileges restored)
 
 --- PASS: TestE2E_ReturningMachineFlow (0.12s)
@@ -163,7 +163,7 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
 [CLIENT] This machine has AppRole credentials (pre-provisioned)
 [CLIENT] Enrolling with --role-id and --secret-id
 
-  hostname:    leonardo-da-pc
+  hostname:    test-workstation
   os:          Ubuntu 25.04
   arch:        amd64
   fingerprint: 56dd0f732bc62988
@@ -316,7 +316,7 @@ KONTANGO_INTEGRATION=1 go test ./tests/integration/... -v -run TestE2E_PreAuthAn
 
 Connecting to enrollment server: http://127.0.0.1:37099
 
-  hostname:    leonardo-da-pc
+  hostname:    test-workstation
   os:          Ubuntu 25.04
   arch:        amd64
   fingerprint: 56dd0f732bc62988
@@ -326,7 +326,7 @@ Connecting to enrollment server: http://127.0.0.1:37099
 ╚════════════════════════════════════════════════════════════════╝
 
   Machine Information Received:
-    • Hostname: leonardo-da-pc
+    • Hostname: test-workstation
     • Method: new
     • OS: linux
     • Arch: amd64

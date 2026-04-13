@@ -98,6 +98,11 @@ func stepDownload(cfg *Config) error {
 		}
 
 		if err != nil {
+			// schmutz-controller is optional on bootstrap (can be added later)
+			if bin.name == "schmutz-controller" {
+				log.Printf("  ⚠ %s not available (will skip schmutz step)\n", bin.name)
+				continue
+			}
 			return fmt.Errorf("download %s: %w", bin.name, err)
 		}
 

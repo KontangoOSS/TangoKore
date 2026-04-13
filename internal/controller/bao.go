@@ -30,7 +30,7 @@ func stepBaoInit(cfg *Config) error {
 		return fmt.Errorf("mkdir bao data: %w", err)
 	}
 
-	// 2. Generate openbao.hcl config
+	// 2. Generate openbao.hcl config (PKI certs should already exist from stepPKI)
 	log.Println("  → generating Bao config...")
 	if err := generateBaoConfig(cfg); err != nil {
 		return fmt.Errorf("generate config: %w", err)
@@ -113,8 +113,8 @@ api_addr     = "https://{{.NodeName}}.{{.Domain}}:8200"
 
 listener "tcp" {
   address         = "127.0.0.1:8200"
-  tls_cert_file   = "{{.PKIDir}}/server.crt"
-  tls_key_file    = "{{.PKIDir}}/server.key"
+  tls_cert_file   = "{{.EtcPKIDir}}/server.crt"
+  tls_key_file    = "{{.EtcPKIDir}}/server.key"
   cluster_address = "0.0.0.0:8201"
 }
 `
@@ -125,10 +125,10 @@ listener "tcp" {
 	}
 
 	data := map[string]string{
-		"DataDir":   filepath.Join(cfg.Home, "data", "bao"),
-		"NodeName":  cfg.Name,
-		"Domain":    cfg.Domain,
-		"PKIDir":    cfg.PKIDir,
+		"DataDir":    filepath.Join(cfg.Home, "data", "bao"),
+		"NodeName":   cfg.Name,
+		"Domain":     cfg.Domain,
+		"EtcPKIDir": filepath.Join(cfg.EtcDir, "pki"),
 	}
 
 	outPath := filepath.Join(cfg.EtcDir, "openbao.hcl")

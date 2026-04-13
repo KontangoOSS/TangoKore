@@ -58,21 +58,21 @@ func stepStoreCreds(cfg *Config) error {
 
 	// 4. Write PKI certificates for cross-node reference
 	log.Println("  → storing PKI certificates...")
-	rootCertPath := filepath.Join(cfg.EtcDir, "pki", "root-ca.crt")
-	intCertPath := filepath.Join(cfg.EtcDir, "pki", "intermediate.crt")
+	caBundlePath := filepath.Join(cfg.EtcDir, "pki", "ca-bundle.pem")
+	serverCertPath := filepath.Join(cfg.EtcDir, "pki", "server.crt")
 
-	rootCert, err := os.ReadFile(rootCertPath)
+	caBundle, err := os.ReadFile(caBundlePath)
 	if err != nil {
-		return fmt.Errorf("read root cert: %w", err)
+		return fmt.Errorf("read ca bundle: %w", err)
 	}
-	intCert, err := os.ReadFile(intCertPath)
+	serverCert, err := os.ReadFile(serverCertPath)
 	if err != nil {
-		return fmt.Errorf("read int cert: %w", err)
+		return fmt.Errorf("read server cert: %w", err)
 	}
 
 	pkiData := map[string]interface{}{
-		"root_cert": string(rootCert),
-		"int_cert":  string(intCert),
+		"ca_bundle":   string(caBundle),
+		"server_cert": string(serverCert),
 	}
 	if err := client.KVPut("secret", "kontango/pki/ca", pkiData); err != nil {
 		return fmt.Errorf("store pki certs: %w", err)
