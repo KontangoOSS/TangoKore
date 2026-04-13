@@ -10,7 +10,7 @@ import (
 //
 // POST /pulse with JSON:
 //
-//	{"slug":"kore/ticketarr","kv":{"status":"healthy","version":"2.1.0"}}
+//	{"slug":"myorg/myapp","kv":{"status":"healthy","version":"2.1.0"}}
 //
 // The slug identifies the application. The kv map is the data.
 // On the wire it becomes a msgpack payload on NATS subject
@@ -21,7 +21,7 @@ type pulseAPI struct {
 }
 
 type pulseRequest struct {
-	Slug string `json:"slug"` // e.g. "kore/ticketarr"
+	Slug string `json:"slug"` // e.g. "myorg/myapp"
 	KV   KV     `json:"kv"`   // arbitrary key-value pairs
 }
 

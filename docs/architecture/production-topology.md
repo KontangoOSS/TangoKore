@@ -2,7 +2,7 @@
 
 ## Overview
 
-The kontango platform runs on a 3-node controller cluster (DigitalOcean) connected to a Proxmox cluster (on-premises) through an OpenZiti overlay mesh. All inter-service communication uses `.tango` DNS names resolved through the Ziti network. Only ports 80 and 443 are exposed to the public internet.
+The kontango platform runs on a 3-node controller cluster (DigitalOcean) connected to a on-premises cluster (on-premises) through an OpenZiti overlay mesh. All inter-service communication uses `.tango` DNS names resolved through the Ziti network. Only ports 80 and 443 are exposed to the public internet.
 
 ## Cluster Layout
 
@@ -22,15 +22,15 @@ The kontango platform runs on a 3-node controller cluster (DigitalOcean) connect
                           Ziti overlay mesh
                                   │
                     ┌─────────────┼───────────────────────┐
-                    │             │    Proxmox (LAN)       │
+                    │             │    Hypervisor (LAN)       │
                     │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐
-                    │  │ hank │ │ pve  │ │slim1 │ │slim2 │
+                    │  │node-1│ │node-2│ │node-3│ │node-4│
                     │  │.tango│ │.tango│ │.tango│ │.tango│
                     │  └──┬───┘ └──┬───┘ └──┬───┘ └──┬───┘
                     │     │        │        │        │    │
                     │     └────────┴────────┴────────┘    │
                     │          10.x.x.0/16 LAN          │
-                    │     LXC containers, VMs, services   │
+                    │     containers, VMs, services   │
                     └─────────────────────────────────────┘
 ```
 
@@ -48,9 +48,9 @@ Each controller runs identical services:
 
 All binaries live at `/opt/kontango/bin/`. Config files at `/etc/kontango/`. PKI at `/etc/kontango/pki/`.
 
-## Proxmox Router Nodes
+## Hypervisor Router Nodes
 
-Each Proxmox node runs a single service:
+Each edge node runs a single service:
 
 | Service | Systemd Unit | Mode | Purpose |
 |---------|-------------|------|---------|
@@ -87,11 +87,11 @@ Service: grafana
   Host:      grafana.tango:3000 (where traffic goes via overlay)
 ```
 
-For node-specific services (Proxmox UI per node):
+For node-specific services (hypervisor UI per node):
 
 ```
-Service: hank-pmx
-  Intercept: hank.tango:8006 (clients dial this)
+Service: node-1-pmx
+  Intercept: node-1.tango:8006 (clients dial this)
   Host:      <node-lan-ip>:8006 (specific LAN backend)
 ```
 
@@ -100,7 +100,7 @@ Service: hank-pmx
 Services are grouped by attribute. Policies grant dial/bind access by identity attribute.
 
 **Service Attributes:**
-- `#infrastructure` — Bao, Ziti controller, SSH, Proxmox UIs
+- `#infrastructure` — Bao, Ziti controller, SSH, hypervisor UIs
 - `#telemetry` — Grafana, InfluxDB, NATS
 
 **Identity Attributes:**
