@@ -16,7 +16,7 @@ The server determines what method applies (new/scan/trusted) based on what it re
 POST /api/enroll/stream
 
 {
-  "hostname": "leonardo-da-pc",
+  "hostname": "test-workstation",
   "os": "linux",
   "os_version": "Ubuntu 25.04",
   "arch": "amd64",
@@ -80,8 +80,8 @@ data: {"status":"quarantine","reason":"new machine"}
 
 event: identity
 data: {
-  "id":"leonardo-da-pc-new",
-  "nickname":"leonardo-da-pc",
+  "id":"test-workstation-new",
+  "nickname":"test-workstation",
   "status":"quarantine",
   "identity": {...pkcs12 cert...},
   "config": {
@@ -97,7 +97,7 @@ Client saves the identity and config:
 
 ```
 ✓ Enrollment complete
-  • Machine ID: leonardo-da-pc-new
+  • Machine ID: test-workstation-new
   • Status: quarantine
   • ACL: stage-0 (read-only, limited services)
   

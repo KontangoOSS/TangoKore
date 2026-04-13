@@ -121,11 +121,11 @@ path "secret/data/kontango/pki/ca" {
 		return fmt.Errorf("enable cert auth: %w", err)
 	}
 
-	// Load intermediate cert for device auth
-	intCertPath := filepath.Join(cfg.EtcDir, "pki", "intermediate.crt")
+	// Load intermediate cert for device auth (signing-chain contains the intermediate that signed devices)
+	intCertPath := filepath.Join(cfg.EtcDir, "pki", "signing-chain.crt")
 	intCert, err := os.ReadFile(intCertPath)
 	if err != nil {
-		return fmt.Errorf("read int cert: %w", err)
+		return fmt.Errorf("read signing chain: %w", err)
 	}
 
 	// Create cert auth role for devices

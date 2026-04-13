@@ -1,7 +1,7 @@
 api_port: 8006
 billing: none
 name: Proxmox VE
-nodes: hank,hope,slim1,slim2,slim3,pve
+nodes: node1,node2,node3
 provisioner: terraform,ansible
 regions: home
 type: on-prem

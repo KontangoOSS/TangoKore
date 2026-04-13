@@ -39,7 +39,7 @@ The join endpoint should:
 ### 1. Verify Controller Status
 ```bash
 # SSH to controller
-ssh root@142.93.75.62
+ssh root@<CONTROLLER_IP>
 
 # Check if service is running
 systemctl status tango-controller
@@ -135,11 +135,8 @@ openssl s_client -connect ctrl.example.com:443
 
 - **Hostname:** `ctrl.example.com`
 - **Type:** A record (round-robin across 3 controllers)
-- **IPs:**
-  - 142.93.75.62 (ctrl-1)
-  - 139.59.175.12 (ctrl-2)
-  - 146.190.115.198 (ctrl-3)
-- Status: Resolving correctly
+- **IPs:** Your controller IPs (round-robin A records)
+- Status: Verify DNS resolution
 
 ### 6. Test After Deployment
 

@@ -61,7 +61,33 @@
   - Limitations and liabilities
   - Contact information
 
-### Technical & Architecture
+### Production Architecture
+- **[architecture/production-topology.md](architecture/production-topology.md)** — Cluster layout and deployment
+  - 3-node controller cluster (DigitalOcean)
+  - 4-node Proxmox edge router mesh
+  - Systemd services, ports, binary locations
+  - Bootstrap sequence
+
+- **[architecture/service-mesh.md](architecture/service-mesh.md)** — Ziti service mesh design
+  - Service registration pattern (host.v2 + intercept.v1)
+  - DNS resolution flow (.tango domains)
+  - Router modes (host vs tproxy)
+  - Policy matrix and service attributes
+  - Smartrouting and naming conventions
+
+- **[architecture/caddy-routing.md](architecture/caddy-routing.md)** — Caddy L4 gateway
+  - TLS termination and certificate management
+  - Public route structure
+  - L4 SNI passthrough design
+  - Reusable snippets
+
+- **[architecture/pki.md](architecture/pki.md)** — Certificate architecture
+  - Certificate hierarchy (Root → Intermediate → Server/Router/Identity)
+  - File locations and SANs
+  - Trust model between components
+  - Key operations (generate, enroll, rotate)
+
+### Enrollment & Technical
 - **[ENROLLMENT_DESIGN.md](ENROLLMENT_DESIGN.md)** — Enrollment architecture
   - How the server determines method (new/scan/trusted)
   - Event streaming (verify → decision → identity)
@@ -205,6 +231,26 @@ README.md (entry point)
           ├─ Liability
           └─ Contact info
 
+Production Architecture:
+  ├─ architecture/production-topology.md
+  │   ├─ Cluster layout (DO + Proxmox)
+  │   ├─ Services per node
+  │   ├─ Firewall rules
+  │   └─ Bootstrap sequence
+  ├─ architecture/service-mesh.md
+  │   ├─ .tango DNS resolution
+  │   ├─ host.v2 config pattern
+  │   ├─ Policy matrix
+  │   └─ Naming conventions
+  ├─ architecture/caddy-routing.md
+  │   ├─ Public routes
+  │   ├─ L4 SNI design
+  │   └─ Certificate management
+  └─ architecture/pki.md
+      ├─ Certificate hierarchy
+      ├─ Trust model
+      └─ Key operations
+
 Technical Documentation:
   ├─ ENROLLMENT_DESIGN.md
   │   ├─ Server-side method determination
@@ -235,10 +281,11 @@ Technical Documentation:
 3. [PRIVACY.md](PRIVACY.md) — Understand your control and rights
 
 ### Path 2: "I need to understand deployment"
-1. [README.md](README.md) — Overview
-2. [ENROLLMENT_DESIGN.md](ENROLLMENT_DESIGN.md) — How enrollment works
-3. [SDK_COMPLETE.md](SDK_COMPLETE.md) — Features and testing
-4. [E2E_TEST_EXAMPLES.md](E2E_TEST_EXAMPLES.md) — Real examples
+1. [architecture/production-topology.md](architecture/production-topology.md) — How it's deployed
+2. [architecture/service-mesh.md](architecture/service-mesh.md) — How services communicate
+3. [architecture/caddy-routing.md](architecture/caddy-routing.md) — How public access works
+4. [architecture/pki.md](architecture/pki.md) — How certificates work
+5. [ENROLLMENT_DESIGN.md](ENROLLMENT_DESIGN.md) — How enrollment works
 
 ### Path 3: "I'm a compliance/legal officer"
 1. [ULA.md](ULA.md) — Full terms

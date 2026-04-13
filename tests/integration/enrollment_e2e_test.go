@@ -97,8 +97,8 @@ func TestE2E_PreAuthAnnouncement(t *testing.T) {
 		// Send identity event with cert and config
 		log.Printf("[SERVER] Issuing identity...")
 		identity := map[string]interface{}{
-			"id":       "leonardo-da-pc-new",
-			"nickname": "leonardo-da-pc",
+			"id":       "test-workstation-new",
+			"nickname": "test-workstation",
 			"status":   "quarantine",
 			"identity": json.RawMessage(`{"type":"pkcs12","cert":"base64-encoded-cert"}`),
 			"config": map[string]interface{}{
@@ -147,8 +147,8 @@ func TestE2E_PreAuthAnnouncement(t *testing.T) {
 	log.Printf("[CLIENT] ✓ Enrollment complete\n")
 
 	// Verify result
-	if result.ID != "leonardo-da-pc-new" {
-		t.Errorf("expected ID 'leonardo-da-pc-new', got %q", result.ID)
+	if result.ID != "test-workstation-new" {
+		t.Errorf("expected ID 'test-workstation-new', got %q", result.ID)
 	}
 	if result.Status != "quarantine" {
 		t.Errorf("expected status 'quarantine', got %q", result.Status)
@@ -205,8 +205,8 @@ func TestE2E_ReturningMachineFlow(t *testing.T) {
 
 		// Send identity with restored ACL
 		identity := map[string]interface{}{
-			"id":       "leonardo-da-pc-known",
-			"nickname": "leonardo-da-pc",
+			"id":       "test-workstation-known",
+			"nickname": "test-workstation",
 			"status":   "approved",
 			"identity": json.RawMessage(`{"type":"pkcs12","cert":"restored-cert"}`),
 			"config": map[string]interface{}{
@@ -221,7 +221,7 @@ func TestE2E_ReturningMachineFlow(t *testing.T) {
 		fmt.Fprintf(w, "event: identity\ndata: %s\n\n", string(identityBytes))
 		flusher.Flush()
 
-		log.Printf("[SERVER] Issued restored identity: %s [approved]", "leonardo-da-pc-known")
+		log.Printf("[SERVER] Issued restored identity: %s [approved]", "test-workstation-known")
 	}))
 	defer server.Close()
 
