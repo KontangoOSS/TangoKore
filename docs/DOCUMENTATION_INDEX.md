@@ -99,10 +99,6 @@
   - Server responses
   - Configuration delivery
 
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** — Feature inventory
-  - What's been built
-  - Files changed
-  - Commands available
 
 - **[SDK_COMPLETE.md](SDK_COMPLETE.md)** — Deployment guide
   - Production-ready checklist
@@ -263,8 +259,6 @@ Technical Documentation:
   │   ├─ Architecture
   │   └─ Deployment guide
   │
-  ├─ IMPLEMENTATION_SUMMARY.md
-  │   ├─ Files changed
   │   └─ Feature details
   │
   └─ E2E_TEST_EXAMPLES.md
@@ -375,7 +369,6 @@ A: Fingerprints can't be guessed, stolen, rotated, or forgotten. Trust grows aut
 | SDK_COMPLETE.md | 11K | Apr 5, 2026 |
 | ENROLLMENT_DESIGN.md | 4.4K | Apr 5, 2026 |
 | E2E_TEST_EXAMPLES.md | 14K | Apr 5, 2026 |
-| IMPLEMENTATION_SUMMARY.md | 8.8K | Apr 5, 2026 |
 
 **Total Documentation:** ~100K across 10 files
 
