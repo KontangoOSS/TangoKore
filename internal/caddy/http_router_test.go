@@ -21,7 +21,7 @@ func TestConfigLookup(t *testing.T) {
 	}{
 		{
 			name:       "config found",
-			domain:     "code.konoss.org",
+			domain:     "code.example.com",
 			statusCode: 200,
 			configBody: &AppConfig{
 				Enabled:         true,
@@ -36,14 +36,14 @@ func TestConfigLookup(t *testing.T) {
 		},
 		{
 			name:       "config not found",
-			domain:     "unknown.konoss.org",
+			domain:     "unknown.example.com",
 			statusCode: 404,
 			expectErr: false,
 			expectNil: true,
 		},
 		{
 			name:       "bao error",
-			domain:     "error.konoss.org",
+			domain:     "error.example.com",
 			statusCode: 500,
 			expectErr: true,
 			expectNil: false,
@@ -230,7 +230,7 @@ func TestRoutingDecision(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create request
-			req := httptest.NewRequest("GET", "https://test.konoss.org/", nil)
+			req := httptest.NewRequest("GET", "https://test.example.com/", nil)
 			if tt.clientAttrs != "" {
 				req.Header.Set("X-Ziti-Attributes", tt.clientAttrs)
 			}
@@ -323,6 +323,6 @@ func BenchmarkConfigLookup(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = router.lookupAppConfig("test.konoss.org")
+		_, _ = router.lookupAppConfig("test.example.com")
 	}
 }

@@ -9,7 +9,7 @@ TangoKore is a composable mesh platform. Each component is independent, versione
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Applications                                           │
-│  ticketarr, konfig, wanda, your apps...                 │
+│  your-app-1, your-app-2, your apps...                 │
 │  Deployed as profiles. Secrets from Bao. Config from git│
 ├─────────────────────────────────────────────────────────┤
 │  Platform                                               │
@@ -80,7 +80,7 @@ Every connection travels through the OpenZiti overlay. There are no open ports o
 - **Authentication**: Every connection is mTLS. The identity was issued at enrollment.
 - **Authorization**: Ziti service policies control who can dial/bind which services. A quarantined machine can only reach `nats.tango` and `config.tango`.
 - **Encryption**: End-to-end. The controller nodes route traffic but can't read it.
-- **Discovery**: Services are named (e.g., `ticketarr.tango`), not addressed by IP. DNS is resolved through the tunnel.
+- **Discovery**: Services are named (e.g., `app.tango`), not addressed by IP. DNS is resolved through the tunnel.
 
 ## Data Flows
 

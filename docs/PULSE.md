@@ -13,7 +13,7 @@ tango.telemetry.<machineID>.<slug>
 ```
 
 - `machineID` — the enrolled machine's unique ID
-- `slug` — the source: `system` for OS metrics, or an application slug like `kore/ticketarr`
+- `slug` — the source: `system` for OS metrics, or an application slug like `myorg/myapp`
 
 The payload is MessagePack-encoded. System pulses use positional arrays (33 bytes). Application pulses use `map[string]string` (schema-free).
 
@@ -22,7 +22,7 @@ The payload is MessagePack-encoded. System pulses use positional arrays (33 byte
 ## Wire format
 
 ```
-NATS subject: tango.telemetry.23c0c89b.kore/ticketarr
+NATS subject: tango.telemetry.23c0c89b.myorg/myapp
 NATS payload: [msgpack map] {"status":"healthy","version":"2.1.0"}
               44 bytes on the wire
 ```
@@ -37,20 +37,20 @@ Every machine runs a NATS leaf node on `localhost:4222`. Connect with any NATS c
 
 ```sh
 # Using the NATS CLI
-nats pub tango.telemetry.local.kore/ticketarr '{"status":"healthy","version":"2.1.0"}'
+nats pub tango.telemetry.local.myorg/myapp '{"status":"healthy","version":"2.1.0"}'
 ```
 
 ```go
 // From Go
 nc, _ := nats.Connect("nats://localhost:4222")
-nc.Publish("tango.telemetry.local.kore/ticketarr", data)
+nc.Publish("tango.telemetry.local.myorg/myapp", data)
 ```
 
 ```python
 # From Python
 import nats
 nc = await nats.connect("nats://localhost:4222")
-await nc.publish("tango.telemetry.local.kore/ticketarr", data)
+await nc.publish("tango.telemetry.local.myorg/myapp", data)
 ```
 
 The leaf handles upstream sync to the controller through Ziti. Your app never touches the network.
@@ -61,7 +61,7 @@ A local HTTP pulse API also runs on `127.0.0.1:8801` for apps that don't want a 
 
 ```sh
 curl -X POST http://localhost:8801/pulse \
-  -d '{"slug":"kore/ticketarr","kv":{"status":"healthy","version":"2.1.0"}}'
+  -d '{"slug":"myorg/myapp","kv":{"status":"healthy","version":"2.1.0"}}'
 ```
 
 ### From a Docker container
@@ -91,7 +91,7 @@ import "github.com/KontangoOSS/TangoKore/internal/agent"
 // The agent handles serialization and transport
 kv := agent.KV{"status": "healthy", "version": "2.1.0"}
 data, _ := agent.encodeKV(kv)
-// publish to NATS subject tango.telemetry.<machineID>.kore/ticketarr
+// publish to NATS subject tango.telemetry.<machineID>.myorg/myapp
 ```
 
 ## Key conventions
@@ -111,12 +111,12 @@ System keys (emitted by the agent automatically):
 Application keys are namespaced by slug in the NATS subject. The KV payload itself uses plain keys:
 
 ```sh
-# Subject: tango.telemetry.<id>.kore/ticketarr
+# Subject: tango.telemetry.<id>.myorg/myapp
 # Payload KV:
 {"status":"healthy","version":"2.1.0","requests":"1547"}
 ```
 
-On the controller, app keys are stored prefixed: `kore/ticketarr.status`, `kore/ticketarr.version`.
+On the controller, app keys are stored prefixed: `myorg/myapp.status`, `myorg/myapp.version`.
 
 ## Subscribing to pulses
 
@@ -139,7 +139,7 @@ The browser subscribes to `tango.telemetry.>` through the Ziti BrowZer SDK and r
 ```
 nats sub "tango.telemetry.>"                              # all machines, all sources
 nats sub "tango.telemetry.23c0c89b.system"                # one machine, system only
-nats sub "tango.telemetry.*.kore/ticketarr"               # all machines, ticketarr only
+nats sub "tango.telemetry.*.myorg/myapp"               # all machines, myapp only
 ```
 
 NATS does server-side filtering — you only receive messages matching your subscription pattern.

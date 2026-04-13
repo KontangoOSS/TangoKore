@@ -41,7 +41,7 @@ func TestConfigLookup(t *testing.T) {
 	}{
 		{
 			name:       "config found",
-			domain:     "code.konoss.org",
+			domain:     "code.example.com",
 			statusCode: 200,
 			configBody: &AppConfig{
 				Enabled:         true,
@@ -56,14 +56,14 @@ func TestConfigLookup(t *testing.T) {
 		},
 		{
 			name:       "config not found (404)",
-			domain:     "unknown.konoss.org",
+			domain:     "unknown.example.com",
 			statusCode: 404,
 			expectErr: false,
 			expectNil: true,
 		},
 		{
 			name:       "bao error (500)",
-			domain:     "error.konoss.org",
+			domain:     "error.example.com",
 			statusCode: 500,
 			expectErr: true,
 			expectNil: true,
@@ -280,7 +280,7 @@ func TestFullRoutingFlow(t *testing.T) {
 	// Create mock Bao server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Return different configs based on domain
-		if strings.Contains(r.URL.Path, "code.konoss.org") {
+		if strings.Contains(r.URL.Path, "code.example.com") {
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(struct {
 				Data struct {
@@ -314,7 +314,7 @@ func TestFullRoutingFlow(t *testing.T) {
 	}
 
 	// Test 1: Configured domain
-	decision, err := router.RouteRequest("code.konoss.org")
+	decision, err := router.RouteRequest("code.example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -326,7 +326,7 @@ func TestFullRoutingFlow(t *testing.T) {
 	}
 
 	// Test 2: Unconfigured domain
-	decision, err = router.RouteRequest("unknown.konoss.org")
+	decision, err = router.RouteRequest("unknown.example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -420,6 +420,6 @@ func BenchmarkConfigLookup(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = router.LookupConfig("test.konoss.org")
+		_, _ = router.LookupConfig("test.example.com")
 	}
 }

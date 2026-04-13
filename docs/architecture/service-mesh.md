@@ -62,7 +62,7 @@ Controller routers run in **host** mode. They bind services but do not intercept
 - Edge listeners on port 3023 (client connections)
 - Tunnel binding in host mode
 
-### Edge Routers (Proxmox nodes)
+### Edge Routers (edge nodes)
 
 Edge routers run in **tproxy** mode. They both bind and intercept services, providing:
 
@@ -88,7 +88,7 @@ When multiple routers bind the same service, Ziti's smartrouting selects the opt
 - Current load and dynamic cost
 - Router proximity in the mesh
 
-This means a client on `hank` dialing `bao.tango` will prefer the terminator on `hank` (local) over one on `ctrl-1` (remote), unless the local terminator is unhealthy.
+This means a client on `node-1` dialing `bao.tango` will prefer the terminator on `node-1` (local) over one on `ctrl-1` (remote), unless the local terminator is unhealthy.
 
 ## DNS Flow
 
@@ -108,7 +108,7 @@ This means a client on `hank` dialing `bao.tango` will prefer the terminator on 
 | Pattern | Example | Usage |
 |---------|---------|-------|
 | `<service>.tango` | `grafana.tango` | Service intercept address |
-| `<node>.tango` | `hank.tango` | Node-specific service (e.g., Proxmox UI) |
+| `<node>.tango` | `node-1.tango` | Node-specific service (e.g., hypervisor UI) |
 | `<service>-host` | `grafana-host` | host.v2 config name |
 | `<service>-intercept` | `grafana-intercept` | intercept.v1 config name |
-| `<node>-pmx` | `hank-pmx` | Per-node Proxmox UI service name |
+| `<node>-pmx` | `node-1-pmx` | Per-node hypervisor UI service name |
