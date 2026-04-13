@@ -44,12 +44,13 @@ type Config struct {
 	DataDir string
 
 	// Ports
-	ZitiCtrlPort int
-	ZitiEdgePort int
-	ZitiLinkPort int
-	BaoPort      int
-	BaoRaftPort  int
-	SchmutzPort  int
+	ZitiCtrlPort        int
+	ZitiEdgePort        int
+	ZitiLinkPort        int
+	BaoPort             int
+	BaoRaftPort         int
+	SchmutzPort         int
+	TangoControllerPort int
 
 	// Accumulated during install
 	BaoUnsealKey string
@@ -116,6 +117,9 @@ func Install(cfg *Config) error {
 	}
 	if cfg.SchmutzPort == 0 {
 		cfg.SchmutzPort = 3080
+	}
+	if cfg.TangoControllerPort == 0 {
+		cfg.TangoControllerPort = 3080
 	}
 
 	// Set default versions
